@@ -2,12 +2,10 @@ package org.firstinspires.ftc.teamcode;
 
 import java.lang.*;
 
+import com.acmerobotics.roadrunner.util.NanoClock;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import com.qualcomm.robotcore.hardware.*;
-
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 public class chassis{
 
@@ -25,8 +23,9 @@ public class chassis{
 
     static final double maxA = 0.3;
     public chassis(DcMotor FL, DcMotor FR, DcMotor BL, DcMotor BR, DcMotor Extender) {
-        // Define Timer Object:
+        // Define Timer Objects:
         timer = new ElapsedTime();
+
 
         // Define Motor Objects for Chassis:
         fL = FL;
@@ -44,6 +43,10 @@ public class chassis{
         fR.setDirection(DcMotor.Direction.FORWARD);
 
         extender.setDirection(DcMotor.Direction.FORWARD);
+
+        bL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        bR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        fL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
     }
 
@@ -118,5 +121,32 @@ public class chassis{
             extender.setPower(1);
         }
         extender.setPower(0);
+    }
+
+    public DcMotor getMotor(String MotorName){
+        if(MotorName.equals("fL")){
+            return fL;
+        }
+        else if(MotorName.equals("fR")){
+            return fR;
+        }
+        else if(MotorName.equals("bL")){
+            return bL;
+        }
+        else{
+            return bR;
+        }
+    }
+
+    public int getEncoderValue(String encoderName){
+        if(encoderName.equals("left")){
+            return bL.getCurrentPosition();
+        }
+        else if(encoderName.equals("right")){
+            return bR.getCurrentPosition();
+        }
+        else{
+            return fL.getCurrentPosition();
+        }
     }
 }

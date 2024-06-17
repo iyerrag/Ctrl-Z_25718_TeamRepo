@@ -1,6 +1,7 @@
-package org.firstinspires.ftc.teamcode.util;
+package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.roadrunner.util.NanoClock;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
@@ -37,7 +38,7 @@ public class Encoder {
         }
     }
 
-    private DcMotorEx motor;
+    private DcMotor motor;
     private NanoClock clock;
 
     private Direction direction;
@@ -47,7 +48,7 @@ public class Encoder {
     private double[] velocityEstimates;
     private double lastUpdateTime;
 
-    public Encoder(DcMotorEx motor, NanoClock clock) {
+    public Encoder(DcMotor motor, NanoClock clock) {
         this.motor = motor;
         this.clock = clock;
 
@@ -58,7 +59,7 @@ public class Encoder {
         this.lastUpdateTime = clock.seconds();
     }
 
-    public Encoder(DcMotorEx motor) {
+    public Encoder(DcMotor motor) {
         this(motor, NanoClock.system());
     }
 
@@ -104,10 +105,10 @@ public class Encoder {
      *
      * @return raw velocity
      */
-    public double getRawVelocity() {
-        int multiplier = getMultiplier();
-        return motor.getVelocity() * multiplier;
-    }
+    //public double getRawVelocity() {
+      //  int multiplier = getMultiplier();
+       // return motor.getVelocity() * multiplier;
+   // }
 
     /**
      * Uses velocity estimates gathered in {@link #getCurrentPosition} to estimate the upper bits of velocity
@@ -116,7 +117,7 @@ public class Encoder {
      *
      * @return corrected velocity
      */
-    public double getCorrectedVelocity() {
+   // public double getCorrectedVelocity() {
         double median = velocityEstimates[0] > velocityEstimates[1]
                 ? Math.max(velocityEstimates[1], Math.min(velocityEstimates[0], velocityEstimates[2]))
                 : Math.max(velocityEstimates[0], Math.min(velocityEstimates[1], velocityEstimates[2]));

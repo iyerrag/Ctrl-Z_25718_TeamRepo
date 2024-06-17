@@ -74,6 +74,11 @@ public class BasicOpMode_Linear extends LinearOpMode {
         bL = hardwareMap.get(DcMotor.class, "BackLeft");
         bR = hardwareMap.get(DcMotor.class, "BackRight");
 
+
+
+
+
+
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
@@ -84,6 +89,8 @@ public class BasicOpMode_Linear extends LinearOpMode {
         fL.setDirection(DcMotor.Direction.REVERSE);
 
         fR.setDirection(DcMotor.Direction.FORWARD);
+
+        chassis robot = new chassis(fL, fR, bL, bR, null);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -121,6 +128,7 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
+            telemetry.addData("Encoder Value: ", robot.getEncoderValue("left"));
             telemetry.update();
         }
     }
