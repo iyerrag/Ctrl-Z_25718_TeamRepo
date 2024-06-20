@@ -69,7 +69,7 @@ public class BasicOpMode_Linear extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        fL  = hardwareMap.get(DcMotor.class, "FrontLeft");
+        fL = hardwareMap.get(DcMotor.class, "FrontLeft");
         fR = hardwareMap.get(DcMotor.class, "FrontRight");
         bL = hardwareMap.get(DcMotor.class, "BackLeft");
         bR = hardwareMap.get(DcMotor.class, "BackRight");
@@ -82,19 +82,16 @@ public class BasicOpMode_Linear extends LinearOpMode {
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        bL.setDirection(DcMotor.Direction.REVERSE);
 
-        bR.setDirection(DcMotor.Direction.FORWARD);
+        chassis robot = new chassis(fL, fR, bL, bR);
 
-        fL.setDirection(DcMotor.Direction.REVERSE);
-
-        fR.setDirection(DcMotor.Direction.FORWARD);
-
-        chassis robot = new chassis(fL, fR, bL, bR, null);
+        //Odometry localizer = new Odometry(0.0, 0.0, 0.0, bL, bR, fR);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
+
+        double[] position = new double[3];
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -108,27 +105,32 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
             // POV Mode uses left stick to go forward, and right stick to turn.
             // - This uses basic math to combine motions and is easier to drive straight.
-            double powX = 0.75 * gamepad1.right_stick_y;
-            double powY = 0.75 * gamepad1.right_stick_x;
-            double addLeft = 0.25 * gamepad1.left_stick_x;
-            double addRight = -0.25 * gamepad1.left_stick_y;
+            double powX = 0.75 * gamepad1.right_stick_x;
+            double powY = -0.75 * gamepad1.right_stick_y;
+            double addLeft = 0.75 * gamepad1.left_stick_x;
+            double addRight = -0.75 * gamepad1.left_stick_x;
 
-            // Tank Mode uses one stick to control each wheel.
-            // - This requires no math, but it is hard to drive forward slowly and keep straight.
-            // leftPower  = -gamepad1.left_stick_y ;
-            // rightPower = -gamepad1.right_stick_y ;
 
             // Send calculated power to wheels
             double a = (powX+powY)*(Math.pow(2, -0.5));
             double b = (-powX+powY)*(Math.pow(2, -0.5));
-            fL.setPower(b + addLeft);
+            fL.setPower(b - addLeft);
             fR.setPower(a + addRight);
             bL.setPower(a + addLeft);
-            bR.setPower(b + addRight);
+            bR.setPower(b - addRight);
+
+
+            //localizer.updateOdometry();
+            //position = localizer.getPosition();
+
 
             // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Encoder Value: ", robot.getEncoderValue("left"));
+            telemetry.addData("Status", "Run Time: " + powX + "," + powY + ";" + runtime.toString());
+
+           // telemetry.addData("X Value: ", "" + position[0]);
+            //telemetry.addData("Y Value: ", "" + position[1]);
+            //telemetry.addData("Theta Value: ", "" + position[2]);
+            //telemetry.addData("LeftEncoderChange: ", "" + localizer.measureLeftEncoderChange());
             telemetry.update();
         }
     }

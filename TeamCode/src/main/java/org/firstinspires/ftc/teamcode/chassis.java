@@ -14,15 +14,14 @@ public class chassis{
     static private DcMotor fR;
     static private DcMotor bL;
     static private DcMotor bR;
-    static private DcMotor extender;
 
     static private ElapsedTime timer;
 
-    static final double rightBias = 0.87;
+    static final double rightBias = 1.0;
     static final double leftBias = 1.0;
 
     static final double maxA = 0.3;
-    public chassis(DcMotor FL, DcMotor FR, DcMotor BL, DcMotor BR, DcMotor Extender) {
+    public chassis(DcMotor FL, DcMotor FR, DcMotor BL, DcMotor BR) {
         // Define Timer Objects:
         timer = new ElapsedTime();
 
@@ -32,7 +31,6 @@ public class chassis{
         fR = FR;
         bL = BL;
         bR = BR;
-        extender = Extender;
 
         bL.setDirection(DcMotor.Direction.REVERSE);
 
@@ -42,12 +40,15 @@ public class chassis{
 
         fR.setDirection(DcMotor.Direction.FORWARD);
 
-        extender.setDirection(DcMotor.Direction.FORWARD);
+       // extender.setDirection(DcMotor.Direction.FORWARD);
 
         bL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         bR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         fL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+        bL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        bR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        fL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     //translation at a constant speed given x and y components of power
@@ -115,14 +116,6 @@ public class chassis{
         }
     }
 
-    public void extend(double time){
-        timer.reset();
-        while(timer.seconds() <= time){
-            extender.setPower(1);
-        }
-        extender.setPower(0);
-    }
-
     public DcMotor getMotor(String MotorName){
         if(MotorName.equals("fL")){
             return fL;
@@ -135,18 +128,6 @@ public class chassis{
         }
         else{
             return bR;
-        }
-    }
-
-    public int getEncoderValue(String encoderName){
-        if(encoderName.equals("left")){
-            return bL.getCurrentPosition();
-        }
-        else if(encoderName.equals("right")){
-            return bR.getCurrentPosition();
-        }
-        else{
-            return fL.getCurrentPosition();
         }
     }
 }

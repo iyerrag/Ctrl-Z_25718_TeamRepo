@@ -21,8 +21,7 @@ public class MyFIRSTJavaOpMode extends LinearOpMode {
         DcMotor FR = hardwareMap.get(DcMotor.class, "FrontRight");
         DcMotor BL = hardwareMap.get(DcMotor.class, "BackLeft");
         DcMotor BR = hardwareMap.get(DcMotor.class, "BackRight");
-        DcMotor Extender = hardwareMap.get(DcMotor.class, "Extender");
-        chassis robot = new chassis(FL, FR, BL, BR, Extender);
+        chassis robot = new chassis(FL, FR, BL, BR);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
