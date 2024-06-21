@@ -105,19 +105,19 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
             // POV Mode uses left stick to go forward, and right stick to turn.
             // - This uses basic math to combine motions and is easier to drive straight.
-            double powX = 0.75 * gamepad1.right_stick_x;
-            double powY = -0.75 * gamepad1.right_stick_y;
-            double addLeft = 0.75 * gamepad1.left_stick_x;
-            double addRight = -0.75 * gamepad1.left_stick_x;
+            double powX = gamepad1.right_stick_x;
+            double powY = - gamepad1.right_stick_y;
+            double addLeft = 0.5 * gamepad1.left_stick_x;
+            double addRight = - 0.5 * gamepad1.left_stick_x;
 
 
             // Send calculated power to wheels
             double a = (powX+powY)*(Math.pow(2, -0.5));
             double b = (-powX+powY)*(Math.pow(2, -0.5));
-            fL.setPower(b - addLeft);
-            fR.setPower(a + addRight);
-            bL.setPower(a + addLeft);
-            bR.setPower(b - addRight);
+            fL.setPower(a + addLeft);
+            fR.setPower(b + addRight);
+            bL.setPower(b + addLeft);
+            bR.setPower(a + addRight);
 
 
             //localizer.updateOdometry();

@@ -61,17 +61,17 @@ public class chassis{
             //vector of the bottom right and front left wheels: b
             double a = (powX+powY)*(Math.pow(2, -0.5));
             double b = (-powX+powY)*(Math.pow(2, -0.5));
-            fL.setPower(b * leftBias);
-            fR.setPower(a * rightBias);
-            bL.setPower(a * leftBias);
-            bR.setPower(b * rightBias);
+            fL.setPower(a * leftBias);
+            fR.setPower(b * rightBias);
+            bL.setPower(b * leftBias);
+            bR.setPower(a * rightBias);
         }
     }
 
     public void translateRadDeg(double radius, double theta, double time) {
         //theta is in degrees (north is 0 deg and positive degrees are clockwise), radius is in units of powX and powY
         timer.reset();
-        theta = -theta + 90; theta *= Math.PI/180;
+        theta = theta; theta *= Math.PI/180;
         double powX = - radius * Math.cos(theta);
         double powY = radius * Math.sin(theta);
         while (timer.seconds() <= time) {
@@ -79,17 +79,17 @@ public class chassis{
             //vector of the bottom right and front left wheels: b
             double a = (powX+powY)*(Math.pow(2, -0.5));
             double b = (-powX+powY)*(Math.pow(2, -0.5));
-            fL.setPower(b * leftBias);
-            fR.setPower(a * rightBias);
-            bL.setPower(a * leftBias);
-            bR.setPower(b * rightBias);
+            fL.setPower(a * leftBias);
+            fR.setPower(b * rightBias);
+            bL.setPower(b * leftBias);
+            bR.setPower(a * rightBias);
         }
     }
 
     public void throttleTranslateRadDeg(double radius, double theta, double s, double time) {
         //theta is in degrees (north is 0 deg and positive degrees are clockwise), radius is in units of powX and powY
         timer.reset();
-        theta = -theta + 90; theta *= Math.PI/180;
+        theta = theta; theta *= Math.PI/180;
         double powX = -radius * Math.cos(theta);
         double powY = radius * Math.sin(theta);
         double mp;
