@@ -85,13 +85,15 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
         chassis robot = new chassis(fL, fR, bL, bR);
 
-        //Odometry localizer = new Odometry(0.0, 0.0, 0.0, bL, bR, fR);
+        double[] position = new double[3];
+        double[] differentials = new double[3];
+        double primes;
+
+        Odometry localizer = new Odometry(0.0, 0.0, 0.0, bL, bR, fL);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
-
-        double[] position = new double[3];
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -119,18 +121,38 @@ public class BasicOpMode_Linear extends LinearOpMode {
             bL.setPower(b + addLeft);
             bR.setPower(a + addRight);
 
+            localizer.updateOdometry();
+            position = localizer.getPosition();
 
-            //localizer.updateOdometry();
-            //position = localizer.getPosition();
+            /*double A[][] = { { 1, 1, 1 },
+                    { 2, 2, 2 },
+                    { 3, 3, 3 },
+                    { 4, 4, 4 } };
 
+            double B[][] = { { 1, 1, 1, 1 },
+                    { 2, 2, 2, 2 },
+                    { 3, 3, 3, 3 } };
+
+            double[][] c = Odometry.multiplyMatrix(A, B);*/
 
             // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + powX + "," + powY + ";" + runtime.toString());
+            telemetry.addData("Status", "Run Time: " + runtime.toString());
 
-           // telemetry.addData("X Value: ", "" + position[0]);
-            //telemetry.addData("Y Value: ", "" + position[1]);
-            //telemetry.addData("Theta Value: ", "" + position[2]);
-            //telemetry.addData("LeftEncoderChange: ", "" + localizer.measureLeftEncoderChange());
+
+            telemetry.addData("X:", "" + position[0]);
+            telemetry.addData("Y:", "" + position[1]);
+            telemetry.addData("Theta:", "" + position[2]);
+            /*telemetry.addData("dx:", "" + differentials[0]);
+            telemetry.addData("dy:", "" + differentials[1]);
+            telemetry.addData("dtheta:", "" + differentials[2]);
+            telemetry.addData("leftCount':", "" + primes);
+            telemetry.addData("y':", "" + primes[1]);
+            telemetry.addData("theta':", "" + primes[2]);
+            telemetry.addData("", "" + c[0][0] + "" + c[0][1] + "" + c[0][2] + "" + c[0][3]);
+            telemetry.addData("", "" + c[1][0] + "" + c[1][1] + "" + c[1][2] + "" + c[1][3]);
+            telemetry.addData("", "" + c[2][0] + "" + c[2][1] + "" + c[2][2] + "" + c[2][3]);
+            telemetry.addData("", "" + c[3][0] + "" + c[3][1] + "" + c[3][2] + "" + c[3][3]);*/
+
             telemetry.update();
         }
     }
