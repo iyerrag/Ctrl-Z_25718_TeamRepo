@@ -26,7 +26,7 @@ public class chassis{
     public chassis(DcMotor FL, DcMotor FR, DcMotor BL, DcMotor BR) {
         // Define Timer Objects:
         timer = new ElapsedTime();
-        localizer = new EulerianOdometry(0.0, 0.0, 0.0, bL, bR, fL);
+        localizer = new EulerianOdometry(0.0, 0.0, 0.0, BL, BR, FL);
 
         // Define Motor Objects for Chassis:
         fL = FL;
@@ -41,6 +41,13 @@ public class chassis{
         fL.setDirection(DcMotor.Direction.REVERSE);
 
         fR.setDirection(DcMotor.Direction.FORWARD);
+
+        bL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        bR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        fL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        bL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        bR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        fL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
        // extender.setDirection(DcMotor.Direction.FORWARD);
     }
@@ -122,7 +129,7 @@ public class chassis{
         localizer = new EulerianOdometry(x, y, theta, bL, bR, fL);
     }
 
-    public void toWaypoint(double x, double y, double theta, double toleranceDist, double toleranceAng, double Kp, double Ki, double Kd, double thetaWeight, double accelLimXY, double accelLimTheta){
+    public void toWaypoint(double x, double y, double theta, double toleranceDist, double toleranceAng, double Kp, double Ki, double Kd, double Kc, double thetaWeight, double accelLimXY, double accelLimTheta){
 
         double Px = 0;
         double Ix = 0;
@@ -142,6 +149,12 @@ public class chassis{
         double previousCorrectionX;
         double previousCorrectionY;
         double previousCorrectionTheta;
+        double previousPx;
+        double previousPy;
+        double previousPtheta;
+        double Kcx = Kc;
+        double Kcy = Kc;
+        double Kctheta = Kc;
 
         // Read current odometry position
         localizer.updateOdometry();
@@ -163,26 +176,60 @@ public class chassis{
             dt = currentTime - previousTime;
 
             // Update Proportional, Integral, and Derivative Errors
+            previousPx = Px;
+            previousPy = Py;
+            previousPtheta = Ptheta;
+
             Px = currentX - x;
             Py = currentY - y;
             Ptheta = currentTheta - theta;
+
+            if(Px > 0){
+               Kcx = Math.abs(Kc);
+            }
+            else if(Px == 0){
+                Kcx = 0;
+            }
+            else{
+                Kcx = -Math.abs(Kc);
+            }
+
+            if(Py > 0){
+                Kcy = Math.abs(Kc);
+            }
+            else if(Py == 0){
+                Kcy = 0;
+            }
+            else{
+                Kcy = -Math.abs(Kc);
+            }
+
+            if(Ptheta > 0){
+                Kctheta = Math.abs(Kc);
+            }
+            else if(Ptheta == 0){
+                Kctheta = 0;
+            }
+            else{
+                Kctheta = -Math.abs(Kc);
+            }
 
             Ix += Px;
             Iy += Py;
             Itheta += Ptheta;
 
-            Dx = Px / dt;
-            Dy = Py / dt;
-            Dtheta = Ptheta / dt;
+            Dx = (Px - previousPx) / dt;
+            Dy = (Py - previousPy) / dt;
+            Dtheta = (Ptheta - previousPtheta) / dt;
 
             // Calculate correction (multiply components by -1):
             previousCorrectionX = correctionX;
             previousCorrectionY = correctionY;
             previousCorrectionTheta = correctionTheta;
 
-            correctionX = -1 * (Kp * Px + Ki * Ix + Kd * Dx);
-            correctionY = -1 * (Kp * Py + Ki * Iy + Kd * Dy);
-            correctionTheta = -1 * (Kp * Ptheta + Ki * Itheta + Kd * Dtheta);
+            correctionX = -1 * (Kp * Px + Ki * Ix - Kd * Dx + Kcx);
+            correctionY = -1 * (Kp * Py + Ki * Iy - Kd * Dy + Kcy);
+            correctionTheta = -1 * (Kp * Ptheta + Ki * Itheta - Kd * Dtheta + Kctheta);
 
             // Check if correction is within accelLim of previous correction to avoid slip
             if(!eqWT(correctionX, previousCorrectionX, accelLimXY)){
@@ -213,10 +260,11 @@ public class chassis{
             // Actuate Correction
             double a = (correctionX+correctionY)*(Math.pow(2, -0.5));
             double b = (-correctionX+correctionY)*(Math.pow(2, -0.5));
-            fL.setPower(a * leftBias * (1 - correctionTheta) * thetaWeight);
-            fR.setPower(b * rightBias * (1 + correctionTheta) * thetaWeight);
-            bL.setPower(b * leftBias * (1 - correctionTheta) * thetaWeight);
-            bR.setPower(a * rightBias * (1 + correctionTheta) * thetaWeight);
+            fL.setPower(a * leftBias - correctionTheta * thetaWeight);
+            fR.setPower(b * rightBias + correctionTheta * thetaWeight);
+            bL.setPower(b * leftBias - correctionTheta * thetaWeight);
+            bR.setPower(a * rightBias + correctionTheta * thetaWeight);
+            // *
         }
         fL.setPower(0);
         fR.setPower(0);

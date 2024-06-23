@@ -43,12 +43,6 @@ public class EulerianOdometry {
         leftEncoder = left;
         rightEncoder = right;
         frontEncoder = front;
-        leftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
 

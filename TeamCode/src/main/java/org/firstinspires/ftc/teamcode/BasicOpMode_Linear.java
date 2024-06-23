@@ -132,7 +132,7 @@ public class BasicOpMode_Linear extends LinearOpMode {
                 double[][] c = Odometry.multiplyMatrix(A, B);*/
             }
             else{
-                robot.toWaypoint(120, 120, 0, 0.2, 1,0.9, 0.09, 0.01, 1, 1, 1);
+                robot.toWaypoint(120, 120, 0, 2, 5,  .009,0.000, 0.0, 0.1, 1, .1, .1);
             }
 
             // Show the elapsed game time and wheel power.

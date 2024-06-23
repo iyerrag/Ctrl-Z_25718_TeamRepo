@@ -29,17 +29,8 @@ public class MyFIRSTJavaOpMode extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
 
-        robot.throttleTranslateRadDeg(1, 90, 1, 6.3);
-        robot.throttleTranslateRadDeg(1, 195, 1, 2.0);
-        robot.tankTurn(-0.15, 1, 0.62);
-        robot.translateXY(0, 0, 1);
-        robot.throttleTranslateRadDeg(1, 90, 1, 4.52);
-        robot.tankTurn(-0.15, 1, 0.8);
-        robot.throttleTranslateRadDeg(1, 90, 1, 6.3);
-        robot.tankTurn(-2, 1, 0.5);
-        robot.translateXY(0, 0, 1);
-        robot.throttleTranslateRadDeg(1, 115, 1, 6.0);
-        robot.tankTurn(-0.15, 1, 0.62);
+        robot.throttleTranslateRadDeg(1, 45, 1, 5);
+        robot.toWaypoint(120, 120, 0, 0.2, 0.1,  .009,0.000, 0.0, 0.1, 0.3, .1, .1);
 
 
 
