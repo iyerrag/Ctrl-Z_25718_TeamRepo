@@ -146,6 +146,8 @@ public class Odometry {
         dy = c * ((dxmin / (dxmax - dxmin)) + 0.5) * (Math.sin((dxmax - dxmin) / c)) + ((dym * c) / (dxmax - dxmin)) * (1 - Math.cos((dxmax - dxmin) / c));
         dtheta = (dxmax - dxmin) / c;
 
+        dx *= 2.33;
+
         if(Math.abs(dxright) > Math.abs(dxleft)){
             dx *= -1;
         }
@@ -161,16 +163,15 @@ public class Odometry {
     public void calculateDifferentials(){
         double dxleft = -1.0 * measureLeftEncoderChange();
         double dxright = -1.0 *  measureRightEncoderChange();
-        double dym = -1.0 * measureFrontEncoderChange();
+        double dym = measureFrontEncoderChange();
 
         if(dxleft == dxright){
             vectorDifferentials(dxleft, dym);
-       }
-       else if(dxleft * dxright < 0){
-            swivelDifferentials(dxleft, dxright, dym);
         }
-        //else{
-        else if(!(dxleft == 0 && dxright == 0)){
+       /*else if(dxleft * dxright < 0){
+            swivelDifferentials(dxleft, dxright, dym);
+        }*/
+        else if(dxleft * dxright >= 0){
             skewedArcDifferentials(dxleft, dxright, dym);
         }
     }
