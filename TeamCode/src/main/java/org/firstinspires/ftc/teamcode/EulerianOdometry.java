@@ -12,7 +12,7 @@ public class EulerianOdometry {
     // Constant "distancePerTick" is the distance moved per odometry wheel tick [autocalculated]
     static final double distancePerTick = 2 * Math.PI * r / ticksPerRev;
     // Constant "forwardOffset" is the distance in cm between the rear odometry wheels and the front odometry wheel
-    static final double forwardOffset = 10.0;
+    static final double forwardOffset = 9.5;
 
     // Field Position Variables; Note x and y are in unit cm while theta is in radians
     private double x;

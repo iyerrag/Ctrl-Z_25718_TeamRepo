@@ -100,36 +100,40 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
             // Choose to drive using either Tank Mode, or POV Mode
             // Comment out the method that's not used.  The default below is POV.
+            if(!gamepad1.a) {
+                // POV Mode uses left stick to go forward, and right stick to turn.
+                // - This uses basic math to combine motions and is easier to drive straight.
+                double powX = gamepad1.right_stick_x;
+                double powY = -gamepad1.right_stick_y;
+                double addLeft = 0.5 * gamepad1.left_stick_x;
+                double addRight = -0.5 * gamepad1.left_stick_x;
 
-            // POV Mode uses left stick to go forward, and right stick to turn.
-            // - This uses basic math to combine motions and is easier to drive straight.
-            double powX = gamepad1.right_stick_x;
-            double powY = - gamepad1.right_stick_y;
-            double addLeft = 0.5 * gamepad1.left_stick_x;
-            double addRight = - 0.5 * gamepad1.left_stick_x;
 
+                // Send calculated power to wheels
+                double a = (powX + powY) * (Math.pow(2, -0.5));
+                double b = (-powX + powY) * (Math.pow(2, -0.5));
+                fL.setPower(a + addLeft);
+                fR.setPower(b + addRight);
+                bL.setPower(b + addLeft);
+                bR.setPower(a + addRight);
 
-            // Send calculated power to wheels
-            double a = (powX+powY)*(Math.pow(2, -0.5));
-            double b = (-powX+powY)*(Math.pow(2, -0.5));
-            fL.setPower(a + addLeft);
-            fR.setPower(b + addRight);
-            bL.setPower(b + addLeft);
-            bR.setPower(a + addRight);
+                localizer.updateOdometry();
+                position = localizer.getPosition();
 
-            localizer.updateOdometry();
-            position = localizer.getPosition();
+                /*double A[][] = { { 1, 1, 1 },
+                        { 2, 2, 2 },
+                        { 3, 3, 3 },
+                        { 4, 4, 4 } };
 
-            /*double A[][] = { { 1, 1, 1 },
-                    { 2, 2, 2 },
-                    { 3, 3, 3 },
-                    { 4, 4, 4 } };
+                double B[][] = { { 1, 1, 1, 1 },
+                        { 2, 2, 2, 2 },
+                        { 3, 3, 3, 3 } };
 
-            double B[][] = { { 1, 1, 1, 1 },
-                    { 2, 2, 2, 2 },
-                    { 3, 3, 3, 3 } };
-
-            double[][] c = Odometry.multiplyMatrix(A, B);*/
+                double[][] c = Odometry.multiplyMatrix(A, B);*/
+            }
+            else{
+                robot.toWaypoint(120, 120, 0, 0.2, 1,0.9, 0.09, 0.01, 1, 1, 1);
+            }
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
