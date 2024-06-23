@@ -85,7 +85,7 @@ public class BasicOpMode_Linear extends LinearOpMode {
         double[] differentials = new double[3];
         double primes;
 
-        EulerianOdometry localizer = new EulerianOdometry(0.0, 0.0, 0.0, bL, bR, fL);
+        NonEulerianOdometry localizer = new NonEulerianOdometry(0.0, 0.0, 0.0, bL, bR, fL);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -117,7 +117,7 @@ public class BasicOpMode_Linear extends LinearOpMode {
                 bL.setPower(b + addLeft);
                 bR.setPower(a + addRight);
 
-                localizer.updateOdometry();
+                double[] temp = localizer.updateOdometry();
                 position = localizer.getPosition();
 
                 /*double A[][] = { { 1, 1, 1 },
@@ -130,6 +130,12 @@ public class BasicOpMode_Linear extends LinearOpMode {
                         { 3, 3, 3, 3 } };
 
                 double[][] c = Odometry.multiplyMatrix(A, B);*/
+
+                telemetry.addData("dx: ", "" + temp[0]);
+
+                telemetry.addData("dy: ", "" + temp[1]);
+
+                telemetry.addData("dTheta: ", "" + temp[2]);
             }
             else{
                 robot.toWaypoint(120, 120, 0, 2, 5,  .009,0.000, 0.0, 0.1, 1, .1, .1);
@@ -142,6 +148,8 @@ public class BasicOpMode_Linear extends LinearOpMode {
             telemetry.addData("X:", "" + position[0]);
             telemetry.addData("Y:", "" + position[1]);
             telemetry.addData("Theta:", "" + position[2]);
+
+
             /*telemetry.addData("dx:", "" + differentials[0]);
             telemetry.addData("dy:", "" + differentials[1]);
             telemetry.addData("dtheta:", "" + differentials[2]);

@@ -14,7 +14,7 @@ public class chassis{
     static private DcMotor fR;
     static private DcMotor bL;
     static private DcMotor bR;
-    static private EulerianOdometry localizer;
+    static private NonEulerianOdometry localizer;
 
     static private ElapsedTime timer;
 
@@ -26,7 +26,7 @@ public class chassis{
     public chassis(DcMotor FL, DcMotor FR, DcMotor BL, DcMotor BR) {
         // Define Timer Objects:
         timer = new ElapsedTime();
-        localizer = new EulerianOdometry(0.0, 0.0, 0.0, BL, BR, FL);
+        localizer = new NonEulerianOdometry(0.0, 0.0, 0.0, BL, BR, FL);
 
         // Define Motor Objects for Chassis:
         fL = FL;
@@ -126,7 +126,7 @@ public class chassis{
     }
 
     public void localize(double x, double y, double theta){
-        localizer = new EulerianOdometry(x, y, theta, bL, bR, fL);
+        localizer = new NonEulerianOdometry(x, y, theta, bL, bR, fL);
     }
 
     public void toWaypoint(double x, double y, double theta, double toleranceDist, double toleranceAng, double Kp, double Ki, double Kd, double Kc, double thetaWeight, double accelLimXY, double accelLimTheta){
