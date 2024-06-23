@@ -85,7 +85,7 @@ public class BasicOpMode_Linear extends LinearOpMode {
         double[] differentials = new double[3];
         double primes;
 
-        Odometry localizer = new Odometry(0.0, 0.0, 0.0, bL, bR, fL);
+        EulerianOdometry localizer = new EulerianOdometry(0.0, 0.0, 0.0, bL, bR, fL);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
