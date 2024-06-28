@@ -12,7 +12,7 @@ public class EulerianOdometry {
     // Constant "distancePerTick" is the distance moved per odometry wheel tick [autocalculated]
     static final double distancePerTick = 2 * Math.PI * r / ticksPerRev;
     // Constant "forwardOffset" is the distance in cm between the rear odometry wheels and the front odometry wheel
-    static final double forwardOffset = 9.5;
+    static final double forwardOffset = 9.8;
 
     // Field Position Variables; Note x and y are in unit cm while theta is in radians
     private double x;
@@ -122,6 +122,7 @@ public class EulerianOdometry {
 
     private void updateGlobalCoordinates(){
 
+
         //Define transformation matrix and robot differential vector
         double[][] differentialVector = new double[][]{{dx}, {dy}, {1}};
         double[][] transformationMatrix = new double[][]{{Math.cos(theta), -1 *  Math.sin(theta), x},
@@ -133,9 +134,10 @@ public class EulerianOdometry {
 
 
         //Update global field coordinates
+        theta = theta + dtheta;
         x = primes[0][0];
         y = primes[1][0];
-        theta = theta + dtheta;
+
     }
 
     // Function to Perform All Odometry Calculations; Use in chassis class methods' loops

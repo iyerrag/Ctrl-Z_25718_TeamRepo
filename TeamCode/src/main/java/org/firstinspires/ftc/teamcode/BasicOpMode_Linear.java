@@ -29,6 +29,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.bosch.BHI260IMU;
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -73,19 +75,20 @@ public class BasicOpMode_Linear extends LinearOpMode {
         fR = hardwareMap.get(DcMotor.class, "FrontRight");
         bL = hardwareMap.get(DcMotor.class, "BackLeft");
         bR = hardwareMap.get(DcMotor.class, "BackRight");
-
+        BHI260IMU IMU = hardwareMap.get(BHI260IMU.class, "imu");
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
 
-        chassis robot = new chassis(fL, fR, bL, bR);
+        chassis robot = new chassis(fL, fR, bL, bR, IMU);
 
         double[] position = new double[3];
         double[] differentials = new double[3];
         double primes;
+        double gyroAngle = 0.0;
 
-        NonEulerianOdometry localizer = new NonEulerianOdometry(0.0, 0.0, 0.0, bL, bR, fL);
+        EulerianOdometry localizer = new EulerianOdometry(0.0, 0.0, 0.0, bL, bR, fL);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -117,9 +120,9 @@ public class BasicOpMode_Linear extends LinearOpMode {
                 bL.setPower(b + addLeft);
                 bR.setPower(a + addRight);
 
-                double[] temp = localizer.updateOdometry();
+                localizer.updateOdometry();
                 position = localizer.getPosition();
-
+                gyroAngle = Math.round(robot.getAngle() * 100.0) / 100.0;
                 /*double A[][] = { { 1, 1, 1 },
                         { 2, 2, 2 },
                         { 3, 3, 3 },
@@ -131,11 +134,11 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
                 double[][] c = Odometry.multiplyMatrix(A, B);*/
 
-                telemetry.addData("dx: ", "" + temp[0]);
+               // telemetry.addData("dx: ", "" + temp[0]);
 
-                telemetry.addData("dy: ", "" + temp[1]);
+                //telemetry.addData("dy: ", "" + temp[1]);
 
-                telemetry.addData("dTheta: ", "" + temp[2]);
+               // telemetry.addData("dTheta: ", "" + temp[2]);
             }
             else{
                 robot.toWaypoint(120, 120, 0, 2, 5,  .009,0.000, 0.0, 0.1, 1, .1, .1);
@@ -145,9 +148,10 @@ public class BasicOpMode_Linear extends LinearOpMode {
             telemetry.addData("Status", "Run Time: " + runtime.toString());
 
 
-            telemetry.addData("X:", "" + position[0]);
-            telemetry.addData("Y:", "" + position[1]);
-            telemetry.addData("Theta:", "" + position[2]);
+            telemetry.addData("X:", "" + Math.round(position[0] * 100.0) / 100.0);
+            telemetry.addData("Y:", "" + Math.round(position[1] * 100.0) / 100.0);
+            telemetry.addData("Theta:", "" + Math.round(position[2] * 100.0) / 100.0);
+            telemetry.addData("Gyro Angle:", "" + gyroAngle);
 
 
             /*telemetry.addData("dx:", "" + differentials[0]);

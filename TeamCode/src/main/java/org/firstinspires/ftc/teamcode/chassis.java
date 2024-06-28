@@ -1,11 +1,21 @@
 package org.firstinspires.ftc.teamcode;
 
+import static java.lang.Thread.sleep;
+
 import java.lang.*;
 
 import com.acmerobotics.roadrunner.util.NanoClock;
+import com.qualcomm.hardware.bosch.BHI260IMU;
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import com.qualcomm.robotcore.hardware.*;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 public class chassis{
 
@@ -15,7 +25,10 @@ public class chassis{
     static private DcMotor bL;
     static private DcMotor bR;
     static private NonEulerianOdometry localizer;
-
+    static private BHI260IMU imu;
+    static private BHI260IMU.Parameters parameters;
+    static private Orientation lastAngles;
+    static private double globalAngle;
     static private ElapsedTime timer;
 
     static final double rightBias = 1.0;
@@ -23,7 +36,7 @@ public class chassis{
 
 
     static final double maxA = 0.3;
-    public chassis(DcMotor FL, DcMotor FR, DcMotor BL, DcMotor BR) {
+    public chassis(DcMotor FL, DcMotor FR, DcMotor BL, DcMotor BR, BHI260IMU IMU) {
         // Define Timer Objects:
         timer = new ElapsedTime();
         localizer = new NonEulerianOdometry(0.0, 0.0, 0.0, BL, BR, FL);
@@ -48,7 +61,24 @@ public class chassis{
         bL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         bR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         fL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        bL.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.BRAKE));
+        bR.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.BRAKE));
+        fL.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.BRAKE));
+        fR.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.BRAKE));
 
+        parameters = new IMU.Parameters(
+                new RevHubOrientationOnRobot(
+                        RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,
+                        RevHubOrientationOnRobot.UsbFacingDirection.LEFT
+                        )
+        );
+
+        imu = IMU;
+
+        imu.initialize(parameters);
+
+        lastAngles = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        globalAngle = 0.0;
        // extender.setDirection(DcMotor.Direction.FORWARD);
     }
 
@@ -72,6 +102,25 @@ public class chassis{
             bR.setPower(a * rightBias);
             localizer.updateOdometry();
         }
+    }
+
+    public double getAngle(){
+        Orientation angles = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
+
+        if(deltaAngle < -180){
+            deltaAngle += 360;
+        }
+        else if (deltaAngle > 180){
+            deltaAngle -= 360;
+        }
+
+        globalAngle += deltaAngle;
+
+        lastAngles = angles;
+
+        return globalAngle;
+
     }
 
     public void translateRadDeg(double radius, double theta, double time) {

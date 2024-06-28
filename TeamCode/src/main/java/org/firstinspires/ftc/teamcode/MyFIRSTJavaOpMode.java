@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.bosch.BHI260IMU;
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -21,7 +23,8 @@ public class MyFIRSTJavaOpMode extends LinearOpMode {
         DcMotor FR = hardwareMap.get(DcMotor.class, "FrontRight");
         DcMotor BL = hardwareMap.get(DcMotor.class, "BackLeft");
         DcMotor BR = hardwareMap.get(DcMotor.class, "BackRight");
-        chassis robot = new chassis(FL, FR, BL, BR);
+        BHI260IMU IMU = hardwareMap.get(BHI260IMU.class, "imu");
+        chassis robot = new chassis(FL, FR, BL, BR, IMU);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
