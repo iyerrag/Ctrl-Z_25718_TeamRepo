@@ -34,9 +34,13 @@ public class EulerianOdometry {
     private DcMotor rightEncoder;
     private DcMotor frontEncoder;
 
+    // IMU Instance Variables
+    static private robotIMU imu;
+    static private String angleMode;
+
 
     // Constructor for Setting up Odometry in chassis class
-    public EulerianOdometry(double startingX, double startingY, double startingTheta, DcMotor left, DcMotor right, DcMotor front){
+    public EulerianOdometry(double startingX, double startingY, double startingTheta, DcMotor left, DcMotor right, DcMotor front,  robotIMU IMU, String thetaMode){
         x = startingX;
         y = startingY;
         theta = startingTheta;
@@ -44,6 +48,8 @@ public class EulerianOdometry {
         rightEncoder = right;
         frontEncoder = front;
 
+        imu = IMU;
+        angleMode = thetaMode;
 
 
         // Note: All other instance variables default to 0.0
@@ -134,7 +140,12 @@ public class EulerianOdometry {
 
 
         //Update global field coordinates
-        theta = theta + dtheta;
+        if(angleMode.equals("Encoder")){
+            theta += dtheta;
+        }
+        else{
+            theta = imu.updateAngle();
+        }
         x = primes[0][0];
         y = primes[1][0];
 

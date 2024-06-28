@@ -25,21 +25,21 @@ public class chassis{
     static private DcMotor bL;
     static private DcMotor bR;
     static private NonEulerianOdometry localizer;
-    static private BHI260IMU imu;
-    static private BHI260IMU.Parameters parameters;
-    static private Orientation lastAngles;
-    static private double globalAngle;
+    static private robotIMU imu;
     static private ElapsedTime timer;
 
     static final double rightBias = 1.0;
     static final double leftBias = 1.0;
+    static private String angleMode;
 
 
     static final double maxA = 0.3;
-    public chassis(DcMotor FL, DcMotor FR, DcMotor BL, DcMotor BR, BHI260IMU IMU) {
+    public chassis(DcMotor FL, DcMotor FR, DcMotor BL, DcMotor BR, BHI260IMU IMU, String thetaMode) {
         // Define Timer Objects:
         timer = new ElapsedTime();
-        localizer = new NonEulerianOdometry(0.0, 0.0, 0.0, BL, BR, FL);
+        imu = new robotIMU(IMU);
+        angleMode = thetaMode;
+        localizer = new NonEulerianOdometry(0.0, 0.0, 0.0, BL, BR, FL, imu, angleMode);
 
         // Define Motor Objects for Chassis:
         fL = FL;
@@ -66,19 +66,7 @@ public class chassis{
         fL.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.BRAKE));
         fR.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.BRAKE));
 
-        parameters = new IMU.Parameters(
-                new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,
-                        RevHubOrientationOnRobot.UsbFacingDirection.LEFT
-                        )
-        );
 
-        imu = IMU;
-
-        imu.initialize(parameters);
-
-        lastAngles = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        globalAngle = 0.0;
        // extender.setDirection(DcMotor.Direction.FORWARD);
     }
 
@@ -104,24 +92,6 @@ public class chassis{
         }
     }
 
-    public double getAngle(){
-        Orientation angles = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
-
-        if(deltaAngle < -180){
-            deltaAngle += 360;
-        }
-        else if (deltaAngle > 180){
-            deltaAngle -= 360;
-        }
-
-        globalAngle += deltaAngle;
-
-        lastAngles = angles;
-
-        return globalAngle;
-
-    }
 
     public void translateRadDeg(double radius, double theta, double time) {
         //theta is in degrees (north is 90 deg and positive degrees are clockwise), radius is in units of powX and powY
@@ -175,7 +145,7 @@ public class chassis{
     }
 
     public void localize(double x, double y, double theta){
-        localizer = new NonEulerianOdometry(x, y, theta, bL, bR, fL);
+        localizer = new NonEulerianOdometry(x, y, theta, bL, bR, fL, imu, angleMode);
     }
 
     public void toWaypoint(double x, double y, double theta, double toleranceDist, double toleranceAng, double Kp, double Ki, double Kd, double Kc, double thetaWeight, double accelLimXY, double accelLimTheta){
