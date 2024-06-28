@@ -24,7 +24,7 @@ public class MyFIRSTJavaOpMode extends LinearOpMode {
         DcMotor BL = hardwareMap.get(DcMotor.class, "BackLeft");
         DcMotor BR = hardwareMap.get(DcMotor.class, "BackRight");
         BHI260IMU IMU = hardwareMap.get(BHI260IMU.class, "imu");
-        chassis robot = new chassis(FL, FR, BL, BR, IMU);
+        chassis robot = new chassis(FL, FR, BL, BR, IMU, "IMU");
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();

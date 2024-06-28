@@ -1,3 +1,5 @@
+// NOTE: EXTREMELY IMPORTANT: IMU-BASED CONTROL NOT COMPLETELY IMPLEMENTED
+
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -32,9 +34,17 @@ public class NonEulerianOdometry {
     private DcMotor rightEncoder;
     private DcMotor frontEncoder;
 
+    // IMU Reference
+    private static robotIMU imu;
+
+    // Angle Mode
+    private static String angleMode;
+
+    private static double imuAngleReading;
+
 
     // Constructor for Setting up Odometry in chassis class
-    public NonEulerianOdometry(double startingX, double startingY, double startingTheta, DcMotor left, DcMotor right, DcMotor front){
+    public NonEulerianOdometry(double startingX, double startingY, double startingTheta, DcMotor left, DcMotor right, DcMotor front, robotIMU IMU, String thetaMode){
         x = startingX;
         y = startingY;
         theta = startingTheta;
@@ -48,7 +58,9 @@ public class NonEulerianOdometry {
         rightEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         frontEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-
+        imu = IMU;
+        angleMode = thetaMode;
+        imuAngleReading = 0.0;
 
         // Note: All other instance variables default to 0.0
     }
@@ -167,7 +179,13 @@ public class NonEulerianOdometry {
         //Update global field coordinates
         x = primes[0][0];
         y = primes[1][0];
-        theta = theta + dtheta;
+        //if(angleMode.equals("Encoder")){
+            theta = theta + dtheta;
+        //}
+        //else{
+            //theta = imu.updateAngle();
+        //}
+
     }
 
     // Function to Perform All Odometry Calculations; Use in chassis class methods' loops

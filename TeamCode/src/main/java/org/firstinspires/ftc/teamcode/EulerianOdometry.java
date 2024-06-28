@@ -34,9 +34,14 @@ public class EulerianOdometry {
     private DcMotor rightEncoder;
     private DcMotor frontEncoder;
 
+    // IMU Instance Variables
+    static private robotIMU imu;
+    static private String angleMode;
+    static private double imuAngleReading;
+
 
     // Constructor for Setting up Odometry in chassis class
-    public EulerianOdometry(double startingX, double startingY, double startingTheta, DcMotor left, DcMotor right, DcMotor front){
+    public EulerianOdometry(double startingX, double startingY, double startingTheta, DcMotor left, DcMotor right, DcMotor front,  robotIMU IMU, String thetaMode){
         x = startingX;
         y = startingY;
         theta = startingTheta;
@@ -44,7 +49,9 @@ public class EulerianOdometry {
         rightEncoder = right;
         frontEncoder = front;
 
-
+        imu = IMU;
+        angleMode = thetaMode;
+        imuAngleReading = 0.0;
 
         // Note: All other instance variables default to 0.0
     }
@@ -78,10 +85,20 @@ public class EulerianOdometry {
         double dxleft = -1.0 * measureLeftEncoderChange();
         double dxright = -1.0 *  measureRightEncoderChange();
         double dym = measureFrontEncoderChange();
-
+        double[] measuredIMUAngle = imu.updateAngle();
+        measuredIMUAngle[0] *= Math.PI / 180.0;
+        measuredIMUAngle[1] *= Math.PI / 180.0;
         dy = (dxleft + dxright) / 2.0;
         dtheta = (dxright - dxleft) / c;
-        dx = dym - forwardOffset * dtheta;
+        if(angleMode.equals("Encoder")){
+            dx = dym - forwardOffset * dtheta;
+        }
+        else{
+            dx = dym - forwardOffset * measuredIMUAngle[1];
+        }
+
+        imuAngleReading = measuredIMUAngle[0];
+
     }
     // Matrix Multiplication Function:
 
@@ -134,7 +151,12 @@ public class EulerianOdometry {
 
 
         //Update global field coordinates
-        theta = theta + dtheta;
+        if(angleMode.equals("Encoder")){
+            theta += dtheta;
+        }
+        else{
+            theta = imuAngleReading;
+        }
         x = primes[0][0];
         y = primes[1][0];
 

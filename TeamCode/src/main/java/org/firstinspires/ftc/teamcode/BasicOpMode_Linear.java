@@ -81,14 +81,12 @@ public class BasicOpMode_Linear extends LinearOpMode {
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
 
-        chassis robot = new chassis(fL, fR, bL, bR, IMU);
+        chassis robot = new chassis(fL, fR, bL, bR, IMU, "IMU");
 
         double[] position = new double[3];
         double[] differentials = new double[3];
         double primes;
         double gyroAngle = 0.0;
-
-        EulerianOdometry localizer = new EulerianOdometry(0.0, 0.0, 0.0, bL, bR, fL);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -120,8 +118,8 @@ public class BasicOpMode_Linear extends LinearOpMode {
                 bL.setPower(b + addLeft);
                 bR.setPower(a + addRight);
 
-                localizer.updateOdometry();
-                position = localizer.getPosition();
+                robot.updateOdometry();
+                position = robot.getPosition();
                 gyroAngle = Math.round(robot.getAngle() * 100.0) / 100.0;
                 /*double A[][] = { { 1, 1, 1 },
                         { 2, 2, 2 },
@@ -141,7 +139,12 @@ public class BasicOpMode_Linear extends LinearOpMode {
                // telemetry.addData("dTheta: ", "" + temp[2]);
             }
             else{
-                robot.toWaypoint(120, 120, 0, 2, 5,  .009,0.000, 0.0, 0.1, 1, .1, .1);
+                robot.toWaypoint(120, 0, 0, 2, 5,  .009,0.000, 0.0, 0.1, 1, .1, .1);
+                robot.toWaypoint(60, 120, 0, 2, 5,  .009,0.000, 0.0, 0.1, 1, .1, .1);
+                robot.toWaypoint(120, 240, 0, 2, 5,  .009,0.000, 0.0, 0.1, 1, .1, .1);
+                robot.toWaypoint(0, 240, 0, 2, 5,  .009,0.000, 0.0, 0.1, 1, .1, .1);
+                robot.toWaypoint(60, 120, 0, 2, 5,  .009,0.000, 0.0, 0.1, 1, .1, .1);
+                robot.toWaypoint(0,0, 0, 2, 5,  .009,0.000, 0.0, 0.1, 1, .1, .1);
             }
 
             // Show the elapsed game time and wheel power.
