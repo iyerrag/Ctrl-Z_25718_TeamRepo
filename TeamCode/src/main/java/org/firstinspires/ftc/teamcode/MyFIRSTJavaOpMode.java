@@ -33,7 +33,7 @@ public class MyFIRSTJavaOpMode extends LinearOpMode {
         waitForStart();
 
         robot.throttleTranslateRadDeg(1, 45, 1, 5);
-        robot.toWaypoint(120, 120, 0, 0.2, 0.1,  .009,0.000, 0.0, 0.1, 0.3, .1, .1);
+        robot.toWaypoint(20, 20, 0, 0.2, 0.1,  .009,0.000, 0.0, 0.1, 0.3, .1, .1);
 
 
 

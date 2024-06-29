@@ -160,7 +160,7 @@ public class chassis{
         double Itheta = 0;
         double Dtheta = 0;
         double previousTime;
-        double currentTime = timer.nanoseconds();
+        double currentTime = timer.seconds();
         double dt;
         double correctionX = 0;
         double correctionY = 0;
@@ -191,7 +191,7 @@ public class chassis{
             currentY = currentPos[1];
             currentTheta = currentPos[2];
             previousTime = currentTime;
-            currentTime = timer.nanoseconds();
+            currentTime = timer.seconds();
             dt = currentTime - previousTime;
 
             // Update Proportional, Integral, and Derivative Errors
@@ -233,9 +233,9 @@ public class chassis{
                 Kctheta = -Math.abs(Kc);
             }
 
-            Ix += Px;
-            Iy += Py;
-            Itheta += Ptheta;
+            Ix += Px * dt;
+            Iy += Py * dt;
+            Itheta += Ptheta * dt;
 
             Dx = (Px - previousPx) / dt;
             Dy = (Py - previousPy) / dt;
@@ -246,11 +246,11 @@ public class chassis{
             previousCorrectionY = correctionY;
             previousCorrectionTheta = correctionTheta;
 
-            correctionX = -1 * (Kp * Px + Ki * Ix - Kd * Dx + Kcx);
-            correctionY = -1 * (Kp * Py + Ki * Iy - Kd * Dy + Kcy);
-            correctionTheta = -1 * (Kp * Ptheta + Ki * Itheta - Kd * Dtheta + Kctheta);
+            correctionX = -1 * (Kp * Px + Ki * Ix + Kd * Dx + Kcx) * 1;
+            correctionY = -1 * (Kp * Py + Ki * Iy + Kd * Dy + Kcy);
+            correctionTheta = -1 * (Kp * Ptheta + Ki * Itheta + Kd * Dtheta + Kctheta);
 
-            // Check if correction is within accelLim of previous correction to avoid slip
+            /*// Check if correction is within accelLim of previous correction to avoid slip
             if(!eqWT(correctionX, previousCorrectionX, accelLimXY)){
                 if(correctionX > previousCorrectionX){
                     correctionX = previousCorrectionX + accelLimXY;
@@ -274,7 +274,7 @@ public class chassis{
                 else{
                     correctionTheta = previousCorrectionTheta - accelLimTheta;
                 }
-            }
+            }*/
 
             // Actuate Correction
             double a = (correctionX+correctionY)*(Math.pow(2, -0.5));
@@ -307,6 +307,7 @@ public class chassis{
     }
 
     public void updateOdometry(){
+
         localizer.updateOdometry();
     }
 
