@@ -139,12 +139,13 @@ public class BasicOpMode_Linear extends LinearOpMode {
                // telemetry.addData("dTheta: ", "" + temp[2]);
             }
             else{
-                robot.toWaypoint(-120, 0, 30, 1, 1,  .0135,0.000, 0.0, 0.1, 0.33, .1, .1);
-                robot.toWaypoint(-60, 120, 0, 1, 1,  .0135,0.00, 0.0, 0.1, .33, .1, .1);
-                robot.toWaypoint(-120, 240, -30, 1, 1,  .0135,0.00, 0.0, 0.1, .33, .1, .1);
-                robot.toWaypoint(0, 240, 0, 1, 1,  .0135,0.00, 0.0, 0.1, .33, .1, .1);
-                robot.toWaypoint(-60, 120, 30, 1, 1,  .0135,0.00, 0.0, 0.1, .33, .1, .1);
-                robot.toWaypoint(0, 0, 0, .05, 1,  .0135,0.00, 0.0, 0.1, .33, .1, .1);
+                robot.waypointSettings(1, 1,  .0135,0.000, 0.0, 0.1, 0.33, .1, .1);
+                robot.toWaypoint(-120, 0, 30);
+                robot.toWaypoint(-60, 120, 0);
+                robot.toWaypoint(-120, 240, -30);
+                robot.toWaypoint(0, 240, 0);
+                robot.toWaypoint(-60, 120, 30);
+                robot.toWaypoint(0, 0, 0);
             }
 
             // Show the elapsed game time and wheel power.
