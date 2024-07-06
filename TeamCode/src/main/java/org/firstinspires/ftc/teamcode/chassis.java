@@ -32,7 +32,7 @@ public class chassis{
     static final double leftBias = 1.0;
     static private String angleMode;
 
-    private double waypointTargetX, waypointTargetY, waypointTargetTheta, waypointToleranceDist, waypointToleranceAng, waypointKp, waypointKi, waypointKd, waypointKc, waypointThetaWeight, waypointAccelLimXY, waypointAccelLimTheta;
+    private double waypointTargetX, waypointTargetY, waypointTargetTheta, waypointToleranceDist, waypointToleranceAng, waypointKp, waypointKi, waypointKd, waypointKcx, waypointKcy, waypointKctheta, waypointThetaWeight, waypointAccelLimXY, waypointAccelLimTheta;
 
 
     static final double maxA = 0.3;
@@ -150,13 +150,15 @@ public class chassis{
         localizer = new EulerianOdometry(x, y, theta, bL, bR, fL, imu, angleMode);
     }
 
-    public void waypointSettings(double toleranceDist, double toleranceAng, double Kp, double Ki, double Kd, double Kc, double thetaWeight, double accelLimXY, double accelLimTheta){
+    public void waypointSettings(double toleranceDist, double toleranceAng, double Kp, double Ki, double Kd, double Kcx, double Kcy, double Kctheta, double thetaWeight, double accelLimXY, double accelLimTheta){
         waypointToleranceDist = toleranceDist;
         waypointToleranceAng = toleranceAng;
         waypointKp = Kp;
         waypointKi = Ki;
         waypointKd = Kd;
-        waypointKc = Kc;
+        waypointKcx = Kcx;
+        waypointKcy = Kcy;
+        waypointKctheta = Kctheta;
         waypointThetaWeight = thetaWeight;
         waypointAccelLimXY = accelLimXY;
         waypointAccelLimTheta = accelLimTheta;
@@ -187,12 +189,16 @@ public class chassis{
         double previousErrX;
         double previousErrY;
         double previousErrTheta;
-        double Kcx = waypointKc;
-        double Kcy = waypointKc;
-        double Kctheta = waypointKc;
+        double Kcx = waypointKcx;
+        double Kcy = waypointKcy;
+        double Kctheta = waypointKctheta;
         double errX = 0;
         double errY = 0;
         double errTheta = 0;
+        double correctionVectorMagnitude = 0.0;
+        double correctionVectorAngle = 0.0;
+        double globalCorrectionX = 0.0;
+        double globalCorrectionY = 0.0;
 
 
         // Read current odometry position
@@ -228,33 +234,33 @@ public class chassis{
             Ptheta = errTheta;
 
             if(Px > 0){
-               Kcx = Math.abs(waypointKc);
+               Kcx = Math.abs(waypointKcx);
             }
             else if(Px == 0){
                 Kcx = 0;
             }
             else{
-                Kcx = -Math.abs(waypointKc);
+                Kcx = -Math.abs(waypointKcx);
             }
 
             if(Py > 0){
-                Kcy = Math.abs(waypointKc);
+                Kcy = Math.abs(waypointKcy);
             }
             else if(Py == 0){
                 Kcy = 0;
             }
             else{
-                Kcy = -Math.abs(waypointKc);
+                Kcy = -Math.abs(waypointKcy);
             }
 
             if(Ptheta > 0){
-                Kctheta = Math.abs(waypointKc);
+                Kctheta = Math.abs(waypointKctheta);
             }
             else if(Ptheta == 0){
                 Kctheta = 0;
             }
             else{
-                Kctheta = -Math.abs(waypointKc);
+                Kctheta = -Math.abs(waypointKctheta);
             }
 
             Ix += errX * dt;
@@ -270,9 +276,12 @@ public class chassis{
             previousCorrectionY = correctionY;
             previousCorrectionTheta = correctionTheta;
 
-            correctionX =  (waypointKp * Px + waypointKi * Ix + waypointKd * Dx + Kcx);
+            correctionX = (waypointKp * Px + waypointKi * Ix + waypointKd * Dx + Kcx);
             correctionY = (waypointKp * Py + waypointKi * Iy + waypointKd * Dy + Kcy);
             correctionTheta = (waypointKp * Ptheta + waypointKi * Itheta + waypointKd * Dtheta + Kctheta);
+
+            globalCorrectionX = correctionX * Math.cos(currentTheta) + correctionY * Math.cos((Math.PI / 2.0) - currentTheta);
+            globalCorrectionY = correctionX * Math.sin(currentTheta) + correctionY * Math.sin((Math.PI / 2.0) - currentTheta);
 
             /*// Check if correction is within accelLim of previous correction to avoid slip
             if(!eqWT(correctionX, previousCorrectionX, accelLimXY)){
@@ -298,16 +307,25 @@ public class chassis{
                 else{
                     correctionTheta = previousCorrectionTheta - accelLimTheta;
                 }
-            }*/
+            }
 
             // Actuate Correction
-            double a = (correctionX+correctionY)*(Math.pow(2, -0.5));
-            double b = (-correctionX+correctionY)*(Math.pow(2, -0.5));
+            double a = (correctionX  + correctionY)*(Math.pow(2, -0.5));
+            double b = (-correctionX + correctionY)*(Math.pow(2, -0.5));
             fL.setPower(a * leftBias - correctionTheta * waypointThetaWeight);
             fR.setPower(b * rightBias + correctionTheta * waypointThetaWeight);
             bL.setPower(b * leftBias - correctionTheta * waypointThetaWeight);
             bR.setPower(a * rightBias + correctionTheta * waypointThetaWeight);
-            // *
+            */
+            // Actuate Correction
+            double a = (correctionX  + correctionY)*(Math.pow(2, -0.5));
+            double b = (-correctionX + correctionY)*(Math.pow(2, -0.5));
+            fL.setPower(a * leftBias - correctionTheta * waypointThetaWeight);
+            fR.setPower(b * rightBias + correctionTheta * waypointThetaWeight);
+            bL.setPower(b * leftBias - correctionTheta * waypointThetaWeight);
+            bR.setPower(a * rightBias + correctionTheta * waypointThetaWeight);
+
+            //return new double[]{globalCorrectionX, globalCorrectionY, correctionX, correctionY, correctionVectorMagnitude, correctionVectorAngle};
         }
         fL.setPower(0);
         fR.setPower(0);
