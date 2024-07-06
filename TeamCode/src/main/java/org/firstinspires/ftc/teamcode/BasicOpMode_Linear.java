@@ -152,7 +152,16 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
 
                 robot.waypointSettings(1, 1,  0.027,0, 0.027 * 0.05, 0.1, 0.1, 0.1, .33, .1, .1);
-                robot.toWaypoint(0, 240, 0);
+                robot.toWaypoint(-60, 240, 0);
+                robot.toWaypoint(-60, 240, 45);
+                robot.toWaypoint(-60, 240, 0);
+                robot.toWaypoint(0,0,0);
+                //robot.toWaypoint(-60, 120, 0);
+                //robot.toWaypoint(-120, 240, 15);
+                //robot.toWaypoint(0, 240, -15);
+                //robot.toWaypoint(-60, 120, -45);
+                //robot.toWaypoint(0, 0, 0);
+                //robot.toWaypoint(0, 240, 0);
                 /*robot.toWaypoint(-60, 0, -30);
                 robot.toWaypoint(-120, 240, 30);
                 robot.toWaypoint(-120, 0, -30);

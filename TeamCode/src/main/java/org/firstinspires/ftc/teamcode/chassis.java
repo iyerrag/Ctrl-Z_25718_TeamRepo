@@ -280,8 +280,8 @@ public class chassis{
             correctionY = (waypointKp * Py + waypointKi * Iy + waypointKd * Dy + Kcy);
             correctionTheta = (waypointKp * Ptheta + waypointKi * Itheta + waypointKd * Dtheta + Kctheta);
 
-            globalCorrectionX = correctionX * Math.cos(currentTheta) - correctionY * Math.sin(currentTheta);
-            globalCorrectionY = correctionX * Math.sin(currentTheta) + correctionY * Math.cos(currentTheta);
+            globalCorrectionX = correctionY * Math.cos(currentTheta) - correctionX * Math.sin(currentTheta);
+            globalCorrectionY = correctionY * Math.sin(currentTheta) + correctionX * Math.cos(currentTheta);
 
             /*// Check if correction is within accelLim of previous correction to avoid slip
             if(!eqWT(correctionX, previousCorrectionX, accelLimXY)){
@@ -318,8 +318,8 @@ public class chassis{
             bR.setPower(a * rightBias + correctionTheta * waypointThetaWeight);
             */
             // Actuate Correction
-            double a = (globalCorrectionX  + globalCorrectionY)*(Math.pow(2, -0.5));
-            double b = (-globalCorrectionX + globalCorrectionY)*(Math.pow(2, -0.5));
+            double a = (correctionX  + correctionY)*(Math.pow(2, -0.5));
+            double b = (-correctionX + correctionY)*(Math.pow(2, -0.5));
             fL.setPower(a * leftBias - correctionTheta * waypointThetaWeight);
             fR.setPower(b * rightBias + correctionTheta * waypointThetaWeight);
             bL.setPower(b * leftBias - correctionTheta * waypointThetaWeight);
