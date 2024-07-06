@@ -92,6 +92,8 @@ public class BasicOpMode_Linear extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
+        double[] ab = {0, 0, 0, 0, 0, 0};
+
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
@@ -139,13 +141,25 @@ public class BasicOpMode_Linear extends LinearOpMode {
                // telemetry.addData("dTheta: ", "" + temp[2]);
             }
             else{
-                robot.waypointSettings(1, 1,  .0135,0.000, 0.0, 0.1, 0.33, .1, .1);
-                robot.toWaypoint(-120, 0, 30);
+                /*robot.waypointSettings(1, 1,  .0135,0.000, 0.0, 0.25, 0.1, 0.1, 0.33, .1, .1);
+                robot.toWaypoint(-120, 0, 45);
                 robot.toWaypoint(-60, 120, 0);
-                robot.toWaypoint(-120, 240, -30);
+                robot.toWaypoint(-120, 240, 15);
+                robot.toWaypoint(0, 240, -15);
+                robot.toWaypoint(-60, 120, -45);
+                robot.waypointSettings(.1, 1,  .0135,0.000, 0.0, 0.15, 0.1, 0.1, 0.33, .1, .1);
+                robot.toWaypoint(0, 0, 0);*/
+
+
+                robot.waypointSettings(1, 1,  0.027,0, 0.027 * 0.05, 0.1, 0.1, 0.1, .33, .1, .1);
                 robot.toWaypoint(0, 240, 0);
-                robot.toWaypoint(-60, 120, 30);
-                robot.toWaypoint(0, 0, 0);
+                /*robot.toWaypoint(-60, 0, -30);
+                robot.toWaypoint(-120, 240, 30);
+                robot.toWaypoint(-120, 0, -30);
+                robot.toWaypoint(-60, 240, 30);
+                //robot.waypointSettings(.1, 1,  .0135,0.000, 0.0, 0.15, 0.1, 0.1, .33, .1, .1);
+                robot.toWaypoint(0, 0, 0);*/
+
             }
 
             // Show the elapsed game time and wheel power.
@@ -156,7 +170,12 @@ public class BasicOpMode_Linear extends LinearOpMode {
             telemetry.addData("Y:", "" + Math.round(position[1] * 100.0) / 100.0);
             telemetry.addData("Theta:", "" + Math.round(position[2] * 100.0) / 100.0);
             telemetry.addData("Gyro Angle:", "" + gyroAngle);
-
+            /*telemetry.addData("globalCorrectionX: ", "" + ab[0]);
+            telemetry.addData("globalCorrectionY: ", "" + ab[1]);
+            telemetry.addData("correctionX: ", "" + ab[2]);
+            telemetry.addData("correctionY: ", "" + ab[3]);
+            telemetry.addData("correctionVectorMagnitude: ", "" + ab[4]);
+            telemetry.addData("correctionVectorAngle: ", "" + ab[5]);*/
 
             /*telemetry.addData("dx:", "" + differentials[0]);
             telemetry.addData("dy:", "" + differentials[1]);
