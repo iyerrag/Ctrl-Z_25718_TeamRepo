@@ -164,7 +164,7 @@ public class chassis{
         waypointAccelLimTheta = accelLimTheta;
     }
 
-    public void toWaypoint(double targetX, double targetY, double targetTheta){
+    public double[] toWaypoint(double targetX, double targetY, double targetTheta){
         waypointTargetX = targetX;
         waypointTargetY = targetY;
         waypointTargetTheta = targetTheta;
@@ -180,12 +180,12 @@ public class chassis{
         double previousTime;
         double currentTime = timer.seconds();
         double dt;
-        double correctionX = 0;
-        double correctionY = 0;
-        double correctionTheta = 0;
-        double previousCorrectionX;
-        double previousCorrectionY;
-        double previousCorrectionTheta;
+        double globalCorrectionX = 0;
+        double globalCorrectionY = 0;
+        double globalCorrectionTheta = 0;
+        double previousGlobalCorrectionX;
+        double previousGlobalCorrectionY;
+        double previousGlobalCorrectionTheta;
         double previousErrX;
         double previousErrY;
         double previousErrTheta;
@@ -197,8 +197,8 @@ public class chassis{
         double errTheta = 0;
         double correctionVectorMagnitude = 0.0;
         double correctionVectorAngle = 0.0;
-        double globalCorrectionX = 0.0;
-        double globalCorrectionY = 0.0;
+        double localCorrectionX = 0.0;
+        double localCorrectionY = 0.0;
 
 
         // Read current odometry position
@@ -209,7 +209,7 @@ public class chassis{
         double currentTheta = currentPos[2];
 
         // PID control to waypoint
-        while(!eqWT(currentX, waypointTargetX, waypointToleranceDist) || !eqWT(currentY, waypointTargetY, waypointToleranceDist) || !eqWT(currentTheta, waypointTargetTheta, waypointToleranceAng)){
+        //while(!eqWT(currentX, waypointTargetX, waypointToleranceDist) || !eqWT(currentY, waypointTargetY, waypointToleranceDist) || !eqWT(currentTheta, waypointTargetTheta, waypointToleranceAng)){
             // Read current odometry position
             localizer.updateOdometry();
             currentPos = localizer.getPosition();
@@ -272,16 +272,16 @@ public class chassis{
             Dtheta = (errTheta - previousErrTheta) / dt;
 
             // Calculate correction (multiply components by -1):
-            previousCorrectionX = correctionX;
-            previousCorrectionY = correctionY;
-            previousCorrectionTheta = correctionTheta;
+            previousGlobalCorrectionX = globalCorrectionX;
+            previousGlobalCorrectionY = globalCorrectionY;
+            previousGlobalCorrectionTheta = globalCorrectionTheta;
 
-            correctionX = (waypointKp * Px + waypointKi * Ix + waypointKd * Dx + Kcx);
-            correctionY = (waypointKp * Py + waypointKi * Iy + waypointKd * Dy + Kcy);
-            correctionTheta = (waypointKp * Ptheta + waypointKi * Itheta + waypointKd * Dtheta + Kctheta);
+            globalCorrectionX = (waypointKp * Px + waypointKi * Ix + waypointKd * Dx + Kcx);
+            globalCorrectionY = (waypointKp * Py + waypointKi * Iy + waypointKd * Dy + Kcy);
+            globalCorrectionTheta = (waypointKp * Ptheta + waypointKi * Itheta + waypointKd * Dtheta + Kctheta);
 
-            globalCorrectionX = correctionY * Math.cos(currentTheta) - correctionX * Math.sin(currentTheta);
-            globalCorrectionY = correctionY * Math.sin(currentTheta) + correctionX * Math.cos(currentTheta);
+            localCorrectionX = globalCorrectionY * Math.cos(currentTheta * Math.PI / 180.0) - globalCorrectionX * Math.sin(currentTheta * Math.PI / 180.0);
+            localCorrectionY = globalCorrectionY * Math.sin(currentTheta * Math.PI / 180.0) + globalCorrectionX * Math.cos(currentTheta * Math.PI / 180.0);
 
             /*// Check if correction is within accelLim of previous correction to avoid slip
             if(!eqWT(correctionX, previousCorrectionX, accelLimXY)){
@@ -318,19 +318,19 @@ public class chassis{
             bR.setPower(a * rightBias + correctionTheta * waypointThetaWeight);
             */
             // Actuate Correction
-            double a = (correctionX  + correctionY)*(Math.pow(2, -0.5));
-            double b = (-correctionX + correctionY)*(Math.pow(2, -0.5));
-            fL.setPower(a * leftBias - correctionTheta * waypointThetaWeight);
-            fR.setPower(b * rightBias + correctionTheta * waypointThetaWeight);
-            bL.setPower(b * leftBias - correctionTheta * waypointThetaWeight);
-            bR.setPower(a * rightBias + correctionTheta * waypointThetaWeight);
+            double a = (localCorrectionX  + localCorrectionY)*(Math.pow(2, -0.5));
+            double b = (-localCorrectionX + localCorrectionY)*(Math.pow(2, -0.5));
+            fL.setPower(a * leftBias - globalCorrectionTheta * waypointThetaWeight);
+            fR.setPower(b * rightBias + globalCorrectionTheta * waypointThetaWeight);
+            bL.setPower(b * leftBias - globalCorrectionTheta * waypointThetaWeight);
+            bR.setPower(a * rightBias + globalCorrectionTheta * waypointThetaWeight);
 
-            //return new double[]{globalCorrectionX, globalCorrectionY, correctionX, correctionY, correctionVectorMagnitude, correctionVectorAngle};
-        }
+            return new double[]{localCorrectionX, localCorrectionY, globalCorrectionX, globalCorrectionY};
+       /* }
         fL.setPower(0);
         fR.setPower(0);
         bL.setPower(0);
-        bR.setPower(0);
+        bR.setPower(0);*/
     }
 
     public void gyroTurn(double powLeft, double powRight, double targetAngle){

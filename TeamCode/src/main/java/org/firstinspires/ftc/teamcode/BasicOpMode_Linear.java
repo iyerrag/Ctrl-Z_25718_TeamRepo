@@ -134,11 +134,11 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
                 double[][] c = Odometry.multiplyMatrix(A, B);*/
 
-               // telemetry.addData("dx: ", "" + temp[0]);
+                // telemetry.addData("dx: ", "" + temp[0]);
 
                 //telemetry.addData("dy: ", "" + temp[1]);
 
-               // telemetry.addData("dTheta: ", "" + temp[2]);
+                // telemetry.addData("dTheta: ", "" + temp[2]);
             }
             else{
                 /*robot.waypointSettings(1, 1,  .0135,0.000, 0.0, 0.25, 0.1, 0.1, 0.33, .1, .1);
