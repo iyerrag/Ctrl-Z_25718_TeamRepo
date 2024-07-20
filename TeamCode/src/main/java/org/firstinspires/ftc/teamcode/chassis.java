@@ -24,7 +24,7 @@ public class chassis{
     static private DcMotor fR;
     static private DcMotor bL;
     static private DcMotor bR;
-    static private EulerianOdometry localizer;
+    static private NonEulerianOdometry localizer;
     static private robotIMU imu;
     static private ElapsedTime timer;
 
@@ -32,16 +32,15 @@ public class chassis{
     static final double leftBias = 1.0;
     static private String angleMode;
 
-    private double waypointTargetX, waypointTargetY, waypointTargetTheta, waypointToleranceDist, waypointToleranceAng, waypointKp, waypointKi, waypointKd, waypointKcx, waypointKcy, waypointKctheta, waypointThetaWeight, waypointAccelLimXY, waypointAccelLimTheta;
-
-
+    private double waypointToleranceDist, waypointToleranceAng, waypointKp, waypointKi, waypointKd, waypointKcx, waypointKcy, waypointKctheta, waypointThetaWeight, waypointAccelLimXY, waypointAccelLimTheta, waypointClamping;
     static final double maxA = 0.3;
+
     public chassis(DcMotor FL, DcMotor FR, DcMotor BL, DcMotor BR, BHI260IMU IMU, String thetaMode) {
         // Define Timer Objects:
         timer = new ElapsedTime();
         imu = new robotIMU(IMU);
         angleMode = thetaMode;
-        localizer = new EulerianOdometry(0.0, 0.0, 0.0, BL, BR, FL, imu, angleMode);
+        localizer = new NonEulerianOdometry(0.0, 0.0, 0.0, BL, BR, FL, imu, angleMode);
 
         // Define Motor Objects for Chassis:
         fL = FL;
@@ -147,12 +146,12 @@ public class chassis{
     }
 
     public void localize(double x, double y, double theta){
-        localizer = new EulerianOdometry(x, y, theta, bL, bR, fL, imu, angleMode);
+        localizer = new NonEulerianOdometry(x, y, theta, bL, bR, fL, imu, angleMode);
     }
 
-    public void waypointSettings(double toleranceDist, double toleranceAng, double Kp, double Ki, double Kd, double Kcx, double Kcy, double Kctheta, double thetaWeight, double accelLimXY, double accelLimTheta){
+    public void waypointSettings(double toleranceDist, double toleranceAng, double Kp, double Ki, double Kd, double Kcx, double Kcy, double Kctheta, double thetaWeight, double accelLimXY, double accelLimTheta, double clamping){
         waypointToleranceDist = toleranceDist;
-        waypointToleranceAng = toleranceAng;
+        waypointToleranceAng = toleranceAng * Math.PI / 180;
         waypointKp = Kp;
         waypointKi = Ki;
         waypointKd = Kd;
@@ -162,12 +161,11 @@ public class chassis{
         waypointThetaWeight = thetaWeight;
         waypointAccelLimXY = accelLimXY;
         waypointAccelLimTheta = accelLimTheta;
+        waypointClamping = clamping;
     }
 
-    public double[] toWaypoint(double targetX, double targetY, double targetTheta){
-        waypointTargetX = targetX;
-        waypointTargetY = targetY;
-        waypointTargetTheta = targetTheta;
+    public double[] toWaypoint(double waypointTargetX, double waypointTargetY, double waypointTargetTheta, double timeout){
+        waypointTargetTheta *= Math.PI / 180.0;
         double Px = 0;
         double Ix = 0;
         double Dx = 0;
@@ -179,6 +177,7 @@ public class chassis{
         double Dtheta = 0;
         double previousTime;
         double currentTime = timer.seconds();
+        double startTime = timer.seconds();
         double dt;
         double globalCorrectionX = 0;
         double globalCorrectionY = 0;
@@ -209,7 +208,7 @@ public class chassis{
         double currentTheta = currentPos[2];
 
         // PID control to waypoint
-        //while(!eqWT(currentX, waypointTargetX, waypointToleranceDist) || !eqWT(currentY, waypointTargetY, waypointToleranceDist) || !eqWT(currentTheta, waypointTargetTheta, waypointToleranceAng)){
+        while((!eqWT(currentX, waypointTargetX, waypointToleranceDist) || !eqWT(currentY, waypointTargetY, waypointToleranceDist) || !eqWT(currentTheta, waypointTargetTheta, waypointToleranceAng)) && ((timer.seconds() - startTime) < timeout)){
             // Read current odometry position
             localizer.updateOdometry();
             currentPos = localizer.getPosition();
@@ -267,6 +266,27 @@ public class chassis{
             Iy += dt * (errY + previousErrY) / 2.0;
             Itheta += dt * (errTheta + previousErrTheta) / 2.0;
 
+            if(Ix > Math.abs(waypointClamping)){
+                Ix = Math.abs(waypointClamping);
+            }
+            else if(Ix < -1 * Math.abs(waypointClamping)){
+                Ix = -1 * Math.abs(waypointClamping);
+            }
+
+            if(Iy > Math.abs(waypointClamping)){
+                Iy = Math.abs(waypointClamping);
+            }
+            else if(Iy < - Math.abs(waypointClamping)){
+                Iy = -1 * Math.abs(waypointClamping);
+            }
+
+            if(Itheta > Math.abs(waypointClamping * waypointThetaWeight)){
+                Itheta = Math.abs(waypointClamping * waypointThetaWeight);
+            }
+            else if(Itheta < - Math.abs(waypointClamping * waypointThetaWeight)){
+                Itheta = -1 * Math.abs(waypointClamping * waypointThetaWeight);
+            }
+
             Dx = (errX - previousErrX) / dt;
             Dy = (errY - previousErrY) / dt;
             Dtheta = (errTheta - previousErrTheta) / dt;
@@ -280,8 +300,16 @@ public class chassis{
             globalCorrectionY = (waypointKp * Py + waypointKi * Iy + waypointKd * Dy + Kcy);
             globalCorrectionTheta = (waypointKp * Ptheta + waypointKi * Itheta + waypointKd * Dtheta + Kctheta);
 
-            localCorrectionX = globalCorrectionY * Math.cos(currentTheta * Math.PI / 180.0) - globalCorrectionX * Math.sin(currentTheta * Math.PI / 180.0);
-            localCorrectionY = globalCorrectionY * Math.sin(currentTheta * Math.PI / 180.0) + globalCorrectionX * Math.cos(currentTheta * Math.PI / 180.0);
+            localCorrectionY = globalCorrectionY * Math.cos(currentTheta) - globalCorrectionX * Math.sin(currentTheta);
+            localCorrectionX = globalCorrectionY * Math.sin(currentTheta) + globalCorrectionX * Math.cos(currentTheta);
+
+            localCorrectionX *= 1.2;
+
+            //localCorrectionY = globalCorrectionX * Math.cos(-1.0 * currentTheta) - globalCorrectionY * Math.sin(-1.0 * currentTheta);
+            //localCorrectionX = globalCorrectionX * Math.sin(-1.0 * currentTheta) + globalCorrectionY * Math.cos(currentTheta);
+
+            //localCorrectionX = 0.6;
+            //localCorrectionY = 0.6;
 
             /*// Check if correction is within accelLim of previous correction to avoid slip
             if(!eqWT(correctionX, previousCorrectionX, accelLimXY)){
@@ -318,39 +346,71 @@ public class chassis{
             bR.setPower(a * rightBias + correctionTheta * waypointThetaWeight);
             */
             // Actuate Correction
-            double a = (localCorrectionX  + localCorrectionY)*(Math.pow(2, -0.5));
-            double b = (-localCorrectionX + localCorrectionY)*(Math.pow(2, -0.5));
-            fL.setPower(a * leftBias - globalCorrectionTheta * waypointThetaWeight);
-            fR.setPower(b * rightBias + globalCorrectionTheta * waypointThetaWeight);
-            bL.setPower(b * leftBias - globalCorrectionTheta * waypointThetaWeight);
-            bR.setPower(a * rightBias + globalCorrectionTheta * waypointThetaWeight);
+            double denominator = Math.max(Math.abs(localCorrectionX) + Math.abs(localCorrectionY) + Math.abs(globalCorrectionTheta * waypointThetaWeight), 1.0);
+            double a = (localCorrectionX  + localCorrectionY);
+            double b = (-localCorrectionX + localCorrectionY);
+            fL.setPower((a * leftBias - globalCorrectionTheta * waypointThetaWeight) / denominator);
+            fR.setPower((b * rightBias + globalCorrectionTheta * waypointThetaWeight) / denominator);
+            bL.setPower((b * leftBias - globalCorrectionTheta * waypointThetaWeight) / denominator);
+            bR.setPower((a * rightBias + globalCorrectionTheta * waypointThetaWeight) / denominator);
 
-            return new double[]{localCorrectionX, localCorrectionY, globalCorrectionX, globalCorrectionY};
-       /* }
+            //return new double[]{localCorrectionX, localCorrectionY, globalCorrectionX, globalCorrectionY, a, b};
+       }
         fL.setPower(0);
         fR.setPower(0);
         bL.setPower(0);
-        bR.setPower(0);*/
+        bR.setPower(0);
+        return new double[]{0.0, 0.0, 0.0, 0.0};
+    }
+
+    public void deflectTo(double deflectionXtarget, double deflectionYtarget, double deflectionThetatarget, double XYTol, double AngTol, double finalXtarget, double finalYtarget, double finalThetatarget, double timeout){
+        bL.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.FLOAT));
+        bR.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.FLOAT));
+        fL.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.FLOAT));
+        fR.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.FLOAT));
+        double prevTolDist = waypointToleranceDist;
+        double prevTolAng = waypointToleranceAng;
+        double prevKp = waypointKp;
+        double prevKi = waypointKi;
+        double prevKd = waypointKd;
+        double prevKcx = waypointKcx;
+        double prevKcy = waypointKcy;
+        double prevKctheta = waypointKctheta;
+        double prevThetaWeight = waypointThetaWeight;
+        double prevAccelLimXY = waypointAccelLimXY;
+        double prevAccelLimTheta = waypointAccelLimTheta;
+        double prevClamping = waypointClamping;
+        waypointSettings(XYTol, AngTol,.027,0.0027, .0027, .00375, .00375, .00375, 15, .1, .1, .1);
+        toWaypoint(deflectionXtarget, deflectionYtarget, deflectionThetatarget, timeout);
+        waypointSettings(prevTolDist, prevTolAng, prevKp, prevKi, prevKd, prevKcx, prevKcy, prevKctheta, prevThetaWeight, prevAccelLimXY, prevAccelLimTheta, prevClamping);
+        toWaypoint(finalXtarget, finalYtarget, finalThetatarget, timeout);
+        bL.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.BRAKE));
+        bR.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.BRAKE));
+        fL.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.BRAKE));
+        fR.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.BRAKE));
     }
 
     public void gyroTurn(double powLeft, double powRight, double targetAngle){
-        double[] currentAngle = imu.updateAngle();
-        if(targetAngle > currentAngle[0]){
-            while(currentAngle[0] < targetAngle){
+        targetAngle *= Math.PI / 180.0;
+        double[] pos = localizer.getPosition();
+        if(targetAngle > pos[2]){
+            while(pos[2] < targetAngle){
                 fL.setPower(powLeft * leftBias);
                 bL.setPower(powLeft * leftBias);
                 fR.setPower(powRight * rightBias);
                 bR.setPower(powRight * rightBias);
                 localizer.updateOdometry();
+                pos = localizer.getPosition();
             }
         }
-        else if(targetAngle < currentAngle[0]){
-            while(currentAngle[0] > targetAngle){
+        else if(targetAngle < pos[2]){
+            while(pos[2] > targetAngle){
                 fL.setPower(powLeft * leftBias);
                 bL.setPower(powLeft * leftBias);
                 fR.setPower(powRight * rightBias);
                 bR.setPower(powRight * rightBias);
                 localizer.updateOdometry();
+                pos = localizer.getPosition();
             }
         }
         fL.setPower(0);

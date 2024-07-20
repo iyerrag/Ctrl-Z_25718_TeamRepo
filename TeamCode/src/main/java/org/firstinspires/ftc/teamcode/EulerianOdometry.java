@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 
 public class EulerianOdometry {
     // Constant "c" is the width between parallel odometry wheels
-    static final double c = 32;
+    static final double c = 29.6;
     // Constant "r" is the radius of the odometry wheels in centimeters
     static final double r = 2.4;
     // Constant "ticksPerRev" is the number of ticks per odometry wheel revolution
@@ -86,8 +86,6 @@ public class EulerianOdometry {
         double dxright = -1.0 *  measureRightEncoderChange();
         double dym = measureFrontEncoderChange();
         double[] measuredIMUAngle = imu.updateAngle();
-        measuredIMUAngle[0] *= Math.PI / 180.0;
-        measuredIMUAngle[1] *= Math.PI / 180.0;
         dy = (dxleft + dxright) / 2.0;
         dtheta = (dxright - dxleft) / c;
         if(angleMode.equals("Encoder")){
@@ -174,7 +172,7 @@ public class EulerianOdometry {
 
     // Function to Return Current Field Positions as an Array
     public double[] getPosition(){
-        return new double[]{x, y, theta * 180 / Math.PI};
+        return new double[]{x, y, theta};
     }
 
 

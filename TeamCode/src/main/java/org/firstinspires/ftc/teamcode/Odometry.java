@@ -1,3 +1,6 @@
+//NOTE: EXTREMELY IMPORTANT: DEGREE TO RADIAN CONVERSIONS NOT REMOVED (7.13.24)
+
+
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -242,7 +245,7 @@ public class Odometry {
 
     // Function to Return Current Field Positions as an Array
     public double[] getPosition(){
-        return new double[]{x, y, theta * 180 / Math.PI};
+        return new double[]{x, y, theta};
     }
 
 

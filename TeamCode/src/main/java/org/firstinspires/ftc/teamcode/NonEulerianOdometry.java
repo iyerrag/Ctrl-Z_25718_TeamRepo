@@ -1,4 +1,5 @@
 // NOTE: EXTREMELY IMPORTANT: IMU-BASED CONTROL NOT COMPLETELY IMPLEMENTED
+// NOTE: EXTREMELY IMPORTANT: IMU DEGREES TO RADIAN CONVERSIONS NOT ELIMINATED (7.13.24)
 
 package org.firstinspires.ftc.teamcode;
 
@@ -6,7 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 
 public class NonEulerianOdometry {
     // Constant "c" is the width between parallel odometry wheels
-    static final double c = 32.0;
+    static final double c = 29.6;
     // Constant "r" is the radius of the odometry wheels in centimeters
     static final double r = 2.4;
     // Constant "ticksPerRev" is the number of ticks per odometry wheel revolution
@@ -65,6 +66,10 @@ public class NonEulerianOdometry {
         // Note: All other instance variables default to 0.0
     }
 
+    private boolean eqWT(double val1, double val2, double e){
+        return Math.abs(val1 - val2) <= e;
+    }
+
     // Functions to determine the distance moved by each encoder
     private double measureLeftEncoderChange() {
         int currentPositionLeft = leftEncoder.getCurrentPosition();
@@ -87,41 +92,42 @@ public class NonEulerianOdometry {
         return difference * distancePerTick;
     }
 
-    // Functions to calculate robot differentials
-
-    private void vectorDifferentials(double dxm, double dym){
-        dx = dym;
-        dy = dxm;
-        dtheta = 0.0;
-    }
-
-    private void skewedArcDifferentials(double dxleft, double dxright, double dym){
-        //double s1 = dxleft;
-        //double s2 = dxright;
-        //double s3 = dym;
-
-        //dx = (c* (s1/(s2-s1) + 1/2 ) + s3) * Math.cos((s2-s1)/c);
-        //dy = (c* (s1/(s2-s1) + 1/2 ) + s3) * Math.sin((s2-s1)/c);
-
-        dx = (((c * dxleft) / (dxright - dxleft)) + 0.5 * c + dym ) * (1 - Math.cos((dxright - dxleft) / c));
-        dy = (((c * dxleft) / (dxright - dxleft)) + 0.5 * c + dym ) * (Math.sin((dxright - dxleft) / c));
-        //dx = (c * (dxleft / (dxright - dxleft) + 0.5) + dym) * Math.cos((dxright - dxleft) / c);
-        //dy = (c * (dxleft / (dxright - dxleft) + 0.5) + dym) * Math.sin((dxright - dxleft) / c);
-
-        dtheta = (dxright - dxleft) / c;
-    }
-
-
-
     public double[] calculateDifferentials(){
         double dxleft = -1.0 * measureLeftEncoderChange();
         double dxright = -1.0 *  measureRightEncoderChange();
-        double dym = 1.0 * measureFrontEncoderChange();
-        if(dxleft == dxright){
-           vectorDifferentials(dxleft, dym);
+        double dym = measureFrontEncoderChange();
+        double[] measuredIMUAngle = imu.updateAngle();
+        if((angleMode.equals("Encoder") && eqWT(dxleft, dxright, (Math.abs(dxleft) + Math.abs(dxright)) * 2)) || (measuredIMUAngle[1] == 0)){
+            dx = 1.0 * dym;
+            dy = (dxleft + dxright) / 2.0;
+            dtheta = 0.0;
        }
        else{
-            skewedArcDifferentials(dxleft, dxright, dym);
+            //double s1 = dxleft;
+            //double s2 = dxright;
+            //double s3 = dym;
+
+            //dx = (c* (s1/(s2-s1) + 1/2 ) + s3) * Math.cos((s2-s1)/c);
+            //dy = (c* (s1/(s2-s1) + 1/2 ) + s3) * Math.sin((s2-s1)/c);
+            if(angleMode.equals("Encoder")){
+                dx = (((c * dxleft) / (dxright - dxleft)) + 0.5 * c + dym ) * (1 - Math.cos((dxright - dxleft) / c));
+                dy = (((c * dxleft) / (dxright - dxleft)) + 0.5 * c + dym ) * (Math.sin((dxright - dxleft) / c));
+                //dx = (c * (dxleft / (dxright - dxleft) + 0.5) + dym) * Math.cos((dxright - dxleft) / c);
+                //dy = (c * (dxleft / (dxright - dxleft) + 0.5) + dym) * Math.sin((dxright - dxleft) / c);
+
+                dtheta = (dxright - dxleft) / c;
+            }
+            else{
+
+
+                dx = (((dxleft) / (measuredIMUAngle[1])) + 0.5 * c + dym ) * (1 - Math.cos(measuredIMUAngle[1]));
+                dy = (((dxleft) / (measuredIMUAngle[1])) + 0.5 * c + dym ) * (Math.sin(measuredIMUAngle[1]));
+                //dx = (c * (dxleft / (dxright - dxleft) + 0.5) + dym) * Math.cos((dxright - dxleft) / c);
+                //dy = (c * (dxleft / (dxright - dxleft) + 0.5) + dym) * Math.sin((dxright - dxleft) / c);
+
+            }
+
+            imuAngleReading = measuredIMUAngle[0];
         }
         //}
 
@@ -179,20 +185,18 @@ public class NonEulerianOdometry {
         //Update global field coordinates
         x = primes[0][0];
         y = primes[1][0];
-        //if(angleMode.equals("Encoder")){
+        if(angleMode.equals("Encoder")){
             theta = theta + dtheta;
-        //}
-        //else{
-            //theta = imu.updateAngle();
-        //}
-
+        }
+        else{
+            theta = imuAngleReading;
+        }
     }
 
     // Function to Perform All Odometry Calculations; Use in chassis class methods' loops
-    public double[] updateOdometry(){
-        double[] returnVal = calculateDifferentials();
+    public void updateOdometry(){
+        calculateDifferentials();
         updateGlobalCoordinates();
-        return returnVal;
     }
 
     public double[] getDifferentials(){
@@ -201,7 +205,7 @@ public class NonEulerianOdometry {
 
     // Function to Return Current Field Positions as an Array
     public double[] getPosition(){
-        return new double[]{x, y, theta * 180 / Math.PI};
+        return new double[]{x, y, theta};
     }
 
 }

@@ -81,7 +81,7 @@ public class BasicOpMode_Linear extends LinearOpMode {
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
 
-        chassis robot = new chassis(fL, fR, bL, bR, IMU, "IMU");
+        chassis robot = new chassis(fL, fR, bL, bR, IMU, "Encoder");
 
         double[] position = new double[3];
         double[] differentials = new double[3];
@@ -151,11 +151,64 @@ public class BasicOpMode_Linear extends LinearOpMode {
                 robot.toWaypoint(0, 0, 0);*/
 
 
-                robot.waypointSettings(1, 1,  0.027,0, 0.027 * 0.05, 0.1, 0.1, 0.1, .33, .1, .1);
-                robot.toWaypoint(-60, 240, 0);
-                robot.toWaypoint(-60, 240, 45);
-                robot.toWaypoint(-60, 240, 0);
+                robot.waypointSettings(1.5, 1.5,.027,0.0027, .0027, .00375, .00375, .00375, 15, .1, .1, .1);
+                robot.deflectTo(-60,60,0, 10,10, -60,110, 0, 2.5);
+                robot.toWaypoint(-60,0,0,1.5);
+                robot.toWaypoint(-140, 0, -90, 2.5);
+                robot.deflectTo(-140, 120, -90, 5,5,-120, 120, -90, 3.5);
+                robot.deflectTo(-140, 120, -90, 5, 5, -140, 0, -90, 3.5);
+                robot.toWaypoint(0,0,0, 3.5);
+                robot.deflectTo(0,240,0, 10,10, -110, 240, 180, 5);
+                robot.toWaypoint(-110, 180, 180, 1.5);
+                robot.deflectTo(-110, 240, 180, 20, 10, 0, 240, 0, 3);
+                robot.toWaypoint(0,0,0, 2.5);
+                robot.deflectTo(0, 170, 90, 5,5,-60, 170,90, 2.5);
+                robot.deflectTo(0, 170, 90, 5,5,0,0,0, 2.5);
+
+
+
+                /*robot.toWaypoint(0, 60, 0, 1);
+                robot.deflectTo(-60, 100, 0, 20, 10, 0, 180, 90, 2);
+                robot.deflectTo(-60, 240, 90, 20, 10, -120, 180, 90, 2);
+                robot.deflectTo(-60, 120, 90, 20, 10, -120, 60, 90, 2);
+                robot.deflectTo(-60, 0, 90, 20, 10, 0, 0, 0, 2);/*
+
+                 */
+
+
+
+                /*robot.toWaypoint(0, 240, 0);
+                robot.toWaypoint(-120, 240, 0);
+                robot.toWaypoint(-120, 0, 0);
                 robot.toWaypoint(0,0,0);
+                robot.toWaypoint(0, 240, 0);
+                robot.toWaypoint(0, 240, 90);
+                robot.toWaypoint(-120, 240, 90);
+                robot.toWaypoint(-120, 240, 180);
+                robot.toWaypoint(-120, 0, 180);
+                robot.toWaypoint(-120, 0, 270);
+                robot.toWaypoint(0, 0,270);
+                robot.toWaypoint(0,0,0);
+                robot.toWaypoint(0, 240, 90);
+                robot.toWaypoint(-120, 240, 180);
+                robot.toWaypoint(-120, 0, 270);
+                robot.toWaypoint(0, 0, 0);
+                //robot.waypointSettings(1, 1,  0.027,0.0027, .0027, .00375, .00375, .00375, 15, .1, .1, .1);
+                /*robot.toWaypoint(0, 240, 45);
+                robot.toWaypoint(0, 0, 0);
+                robot.toWaypoint(-120, 0, 0);
+                robot.waypointSettings(1, 1,  0.027,0, 0.027 * 0.05, 0, 0, 0.1, 1, .1, .1);
+                robot.toWaypoint(-120, 0, 180);
+                robot.toWaypoint(-120, 0, 0);
+                robot.toWaypoint(0,0,0);
+                robot.gyroTurn(-1, 1, 90);
+                robot.gyroTurn(1, -1, 0);*/
+
+
+
+                //robot.toWaypoint(-60, 240, 45);
+                //robot.toWaypoint(-60, 240, 0);
+                //robot.toWaypoint(0,0,0);
                 //robot.toWaypoint(-60, 120, 0);
                 //robot.toWaypoint(-120, 240, 15);
                 //robot.toWaypoint(0, 240, -15);
@@ -177,8 +230,8 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
             telemetry.addData("X:", "" + Math.round(position[0] * 100.0) / 100.0);
             telemetry.addData("Y:", "" + Math.round(position[1] * 100.0) / 100.0);
-            telemetry.addData("Theta:", "" + Math.round(position[2] * 100.0) / 100.0);
-            telemetry.addData("Gyro Angle:", "" + gyroAngle);
+            telemetry.addData("Theta:", "" + (Math.round(position[2] * 100.0) / 100.0) * 180.0 / Math.PI);
+            telemetry.addData("Gyro Angle:", "" + gyroAngle * 180.0 / Math.PI);
             /*telemetry.addData("globalCorrectionX: ", "" + ab[0]);
             telemetry.addData("globalCorrectionY: ", "" + ab[1]);
             telemetry.addData("correctionX: ", "" + ab[2]);

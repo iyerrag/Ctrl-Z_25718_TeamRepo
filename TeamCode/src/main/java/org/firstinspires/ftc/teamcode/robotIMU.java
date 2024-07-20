@@ -27,20 +27,20 @@ public class robotIMU {
 
         imu.initialize(parameters);
 
-        lastAngles = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        lastAngles = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS);
         globalAngle = 0.0;
     }
 
 
     public double[] updateAngle(){
-        Orientation angles = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        Orientation angles = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS);
         double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
 
-        if(deltaAngle < -180){
-            deltaAngle += 360;
+        if(deltaAngle < -Math.PI){
+            deltaAngle += 2.0 * Math.PI;
         }
-        else if (deltaAngle > 180){
-            deltaAngle -= 360;
+        else if (deltaAngle > Math.PI){
+            deltaAngle -= 2.0 * Math.PI;
         }
 
         globalAngle += deltaAngle;
