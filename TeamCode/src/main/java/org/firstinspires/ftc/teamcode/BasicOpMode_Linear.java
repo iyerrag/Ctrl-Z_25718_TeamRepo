@@ -81,7 +81,7 @@ public class BasicOpMode_Linear extends LinearOpMode {
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
 
-        chassis robot = new chassis(fL, fR, bL, bR, IMU, "Encoder");
+        chassis robot = new chassis(fL, fR, bL, bR, IMU, "IMU");
 
         double[] position = new double[3];
         double[] differentials = new double[3];
@@ -152,7 +152,7 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
 
                 robot.waypointSettings(1.5, 1.5,.027,0.0027, .0027, .00375, .00375, .00375, 15, .1, .1, .1);
-                robot.deflectTo(-60,60,0, 10,10, -60,110, 0, 2.5);
+                /*robot.deflectTo(-60,60,0, 10,10, -60,110, 0, 2.5);
                 robot.toWaypoint(-60,0,0,1.5);
                 robot.toWaypoint(-140, 0, -90, 2.5);
                 robot.deflectTo(-140, 120, -90, 5,5,-120, 120, -90, 3.5);
@@ -163,17 +163,17 @@ public class BasicOpMode_Linear extends LinearOpMode {
                 robot.deflectTo(-110, 240, 180, 20, 10, 0, 240, 0, 3);
                 robot.toWaypoint(0,0,0, 2.5);
                 robot.deflectTo(0, 170, 90, 5,5,-60, 170,90, 2.5);
-                robot.deflectTo(0, 170, 90, 5,5,0,0,0, 2.5);
+                robot.deflectTo(0, 170, 90, 5,5,0,0,0, 2.5);*/
 
 
 
-                /*robot.toWaypoint(0, 60, 0, 1);
-                robot.deflectTo(-60, 100, 0, 20, 10, 0, 180, 90, 2);
-                robot.deflectTo(-60, 240, 90, 20, 10, -120, 180, 90, 2);
-                robot.deflectTo(-60, 120, 90, 20, 10, -120, 60, 90, 2);
-                robot.deflectTo(-60, 0, 90, 20, 10, 0, 0, 0, 2);/*
+                robot.toWaypoint(0, 60, 0, 1);
+                robot.deflectTo(-60, 100, 0, 20, 10, 0, 180, 90, 3);
+                robot.deflectTo(-60, 240, 90, 20, 10, -120, 180, 90, 3);
+                robot.deflectTo(-60, 120, 90, 20, 10, -120, 60, 90, 3);
+                robot.deflectTo(-60, 0, 90, 20, 10, 0, 0, 0, 3);
 
-                 */
+
 
 
 
@@ -206,21 +206,21 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
 
 
-                //robot.toWaypoint(-60, 240, 45);
-                //robot.toWaypoint(-60, 240, 0);
-                //robot.toWaypoint(0,0,0);
-                //robot.toWaypoint(-60, 120, 0);
-                //robot.toWaypoint(-120, 240, 15);
-                //robot.toWaypoint(0, 240, -15);
-                //robot.toWaypoint(-60, 120, -45);
-                //robot.toWaypoint(0, 0, 0);
-                //robot.toWaypoint(0, 240, 0);
-                /*robot.toWaypoint(-60, 0, -30);
-                robot.toWaypoint(-120, 240, 30);
-                robot.toWaypoint(-120, 0, -30);
-                robot.toWaypoint(-60, 240, 30);
-                //robot.waypointSettings(.1, 1,  .0135,0.000, 0.0, 0.15, 0.1, 0.1, .33, .1, .1);
-                robot.toWaypoint(0, 0, 0);*/
+                /*robot.toWaypoint(-60, 240, 45, 2);
+                robot.toWaypoint(-60, 240, 0, 2);
+                robot.toWaypoint(0,0,0,2);
+                robot.toWaypoint(-60, 120, 0,2);
+                robot.toWaypoint(-120, 240, 15,2);
+                robot.toWaypoint(0, 240, -15,2);
+                robot.toWaypoint(-60, 120, -45,2);
+                robot.toWaypoint(0, 0, 0,2);
+                robot.toWaypoint(0, 240, 0,2);
+                robot.toWaypoint(-60, 0, -30,2);
+                robot.toWaypoint(-120, 240, 30,2);
+                robot.toWaypoint(-120, 0, -30,2);
+                robot.toWaypoint(-60, 240, 30,2);
+                robot.waypointSettings(1.5, 1.5,.027,0.0027, .0027, .00375, .00375, .00375, 15, .1, .1, .1);
+                robot.toWaypoint(0, 0, 0, 3);*/
 
             }
 

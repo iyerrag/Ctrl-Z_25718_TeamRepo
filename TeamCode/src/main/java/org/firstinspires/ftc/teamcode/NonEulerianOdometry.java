@@ -7,13 +7,15 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 
 public class NonEulerianOdometry {
     // Constant "c" is the width between parallel odometry wheels
-    static final double c = 29.6;
+    static final double c = 30;
     // Constant "r" is the radius of the odometry wheels in centimeters
     static final double r = 2.4;
     // Constant "ticksPerRev" is the number of ticks per odometry wheel revolution
     static final double ticksPerRev = 2000.0;
     // Constant "distancePerTick" is the distance moved per odometry wheel tick [autocalculated]
     static final double distancePerTick = 2 * Math.PI * r / ticksPerRev;
+    // Forward Offset
+    static final double forwardOffset = 10;
 
     // Field Position Variables; Note x and y are in unit cm while theta is in radians
     private double x;
@@ -41,7 +43,8 @@ public class NonEulerianOdometry {
     // Angle Mode
     private static String angleMode;
 
-    private static double imuAngleReading;
+    private static double imuGlobalAngle;
+    private static double imuDeltaAngle;
 
 
     // Constructor for Setting up Odometry in chassis class
@@ -61,7 +64,8 @@ public class NonEulerianOdometry {
 
         imu = IMU;
         angleMode = thetaMode;
-        imuAngleReading = 0.0;
+        imuGlobalAngle = 0.0;
+        imuDeltaAngle = 0.0;
 
         // Note: All other instance variables default to 0.0
     }
@@ -92,17 +96,17 @@ public class NonEulerianOdometry {
         return difference * distancePerTick;
     }
 
-    public double[] calculateDifferentials(){
+    /*public double[] calculateDifferentials(){
         double dxleft = -1.0 * measureLeftEncoderChange();
         double dxright = -1.0 *  measureRightEncoderChange();
         double dym = measureFrontEncoderChange();
         double[] measuredIMUAngle = imu.updateAngle();
-        if((angleMode.equals("Encoder") && eqWT(dxleft, dxright, (Math.abs(dxleft) + Math.abs(dxright)) * 2)) || (measuredIMUAngle[1] == 0)){
-            dx = 1.0 * dym;
-            dy = (dxleft + dxright) / 2.0;
-            dtheta = 0.0;
-       }
-       else{
+        if((angleMode.equals("Encoder") && eqWT(dxleft, dxright, (Math.abs(dxleft) + Math.abs(dxright)) * .5))){
+            dtheta = (dxright - dxleft) / c;
+            dx = dym - forwardOffset * dtheta;
+            dy = (dxleft + dxright) / 2;
+        }
+        else{
             //double s1 = dxleft;
             //double s2 = dxright;
             //double s3 = dym;
@@ -132,7 +136,44 @@ public class NonEulerianOdometry {
         //}
 
         return new double[]{dx, dy, dtheta};
+    }/*
+
+     */
+
+    public void calculateDifferentials(){
+        double dL = -1.0 * measureLeftEncoderChange();
+        double dR = -1.0 *  measureRightEncoderChange();
+        double dF = measureFrontEncoderChange();
+        dtheta = (dR - dL) / c;
+        double[] gyroReading = imu.updateAngle();
+        imuGlobalAngle = gyroReading[0];
+        imuDeltaAngle = gyroReading[1];
+        if(angleMode.equals("Encoder")){
+            if (eqWT(dtheta, 0, .015)){
+                dx = dF;
+                dy = (dL + dR) / 2;
+            }
+            else{
+                double rt = (c / 2) * (dL + dR) / (dR - dL);
+                double rs = (dF / dtheta) + forwardOffset;
+                dx = rt * (Math.cos(dtheta) - 1) + rs * Math.sin(dtheta);
+                dy = rt * Math.sin(dtheta) + rs * (1 - Math.cos(dtheta));
+            }
+        }
+        else{
+            if (eqWT(imuDeltaAngle, 0, .015)){
+                dx = dF;
+                dy = (dL + dR) / 2;
+            }
+            else{
+                double rt = (dL + dR) / (2 * imuDeltaAngle);
+                double rs = (dF / imuDeltaAngle) + forwardOffset;
+                dx = rt * (Math.cos(imuDeltaAngle) - 1) + rs * Math.sin(imuDeltaAngle);
+                dy = rt * Math.sin(imuDeltaAngle) + rs * (1 - Math.cos(imuDeltaAngle));
+            }
+        }
     }
+
     // Matrix Multiplication Function:
 
     // Function to multiply
@@ -173,10 +214,13 @@ public class NonEulerianOdometry {
     private void updateGlobalCoordinates(){
 
         //Define transformation matrix and robot differential vector
+        if(angleMode.equals("Encoder")){theta += 0.5 * dtheta;}
+        else{theta += 0.5 * imuDeltaAngle;}
+
         double[][] differentialVector = new double[][]{{dx}, {dy}, {1.0}};
         double[][] transformationMatrix = new double[][]{{Math.cos(theta), -1.0 *  Math.sin(theta), x},
-                                                        {Math.sin(theta), Math.cos(theta), y },
-                                                        {0.0, 0.0, 1.0}  };
+                {Math.sin(theta), Math.cos(theta), y },
+                {0.0, 0.0, 1.0}  };
 
         //Linear transformation of robot differential vector to global field coordinates
         double[][] primes = multiplyMatrix(transformationMatrix, differentialVector);
@@ -186,10 +230,10 @@ public class NonEulerianOdometry {
         x = primes[0][0];
         y = primes[1][0];
         if(angleMode.equals("Encoder")){
-            theta = theta + dtheta;
+            theta += 0.5 * dtheta;
         }
         else{
-            theta = imuAngleReading;
+            theta = imuGlobalAngle;
         }
     }
 
