@@ -106,7 +106,6 @@ public class BasicOpMode_Linear extends LinearOpMode {
             // Choose to drive using either Tank Mode, or POV Mode
             // Comment out the method that's not used.  The default below is POV.
             if(gamepad1.a){
-                gripper.close();
                 /*robot.waypointSettings(1, 1,  .0135,0.000, 0.0, 0.25, 0.1, 0.1, 0.33, .1, .1);
                 robot.toWaypoint(-120, 0, 45);
                 robot.toWaypoint(-60, 120, 0);
@@ -198,18 +197,17 @@ public class BasicOpMode_Linear extends LinearOpMode {
                 gripper.open();
             }
             else if(gamepad1.x){
-                gripper.close();
                 gripper.liftTo(0,0);
                 telemetry.addData("LiftPow: ", gripper.getLiftPos());
             }
             else if(gamepad1.y){
-                gripper.close();
                 gripper.liftTo(1000, 0);
                 telemetry.addData("LiftPos: ", gripper.getLiftPos());
             }
-            else{
+            else if(gamepad1.right_bumper){
                 gripper.close();
-
+            }
+            else{
                 // POV Mode uses left stick to go forward, and right stick to turn.
                 // - This uses basic math to combine motions and is easier to drive straight.
                 double powX = gamepad1.right_stick_x;

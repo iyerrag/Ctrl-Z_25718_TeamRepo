@@ -7,7 +7,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class claw {
     private Servo leftTalon;
     private Servo rightTalon;
-
     private DcMotor extender;
 
 
@@ -15,7 +14,7 @@ public class claw {
         leftTalon = left;
         rightTalon = right;
         extender = lifter;
-        extender.setDirection(DcMotor.Direction.REVERSE);
+        extender.setDirection(DcMotor.Direction.FORWARD);
         extender.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         extender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         extender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -34,10 +33,8 @@ public class claw {
     public void liftTo(int targetPos, double holdingForce){
 
         extender.setTargetPosition(targetPos);
-        extender.setPower(.5);
         extender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-
+        extender.setPower(.5);
 
       /* int currentPos = extender.getCurrentPosition();
       if(currentPos < targetPos){
