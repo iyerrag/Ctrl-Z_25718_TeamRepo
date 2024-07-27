@@ -194,7 +194,8 @@ public class BasicOpMode_Linear extends LinearOpMode {
                 gripper.close();
             }
             else if(gamepad1.y){
-                gripper.liftTo(5);
+                gripper.liftTo(1000);
+                telemetry.addData("LiftPos: ", gripper.getLiftPos());
             }
             else{
                 // POV Mode uses left stick to go forward, and right stick to turn.
