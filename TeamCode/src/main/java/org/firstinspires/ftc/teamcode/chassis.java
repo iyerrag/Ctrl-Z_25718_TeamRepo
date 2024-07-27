@@ -303,7 +303,8 @@ public class chassis{
             localCorrectionY = globalCorrectionY * Math.cos(currentTheta) - globalCorrectionX * Math.sin(currentTheta);
             localCorrectionX = globalCorrectionY * Math.sin(currentTheta) + globalCorrectionX * Math.cos(currentTheta);
 
-            localCorrectionX *= 1.2;
+            localCorrectionX *= 1.25;
+            localCorrectionY *= 0.9;
 
             //localCorrectionY = globalCorrectionX * Math.cos(-1.0 * currentTheta) - globalCorrectionY * Math.sin(-1.0 * currentTheta);
             //localCorrectionX = globalCorrectionX * Math.sin(-1.0 * currentTheta) + globalCorrectionY * Math.cos(currentTheta);

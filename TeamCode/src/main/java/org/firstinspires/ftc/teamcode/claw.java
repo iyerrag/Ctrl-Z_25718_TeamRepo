@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 public class claw {
@@ -14,8 +15,10 @@ public class claw {
         leftTalon = left;
         rightTalon = right;
         extender = lifter;
-        extender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        extender.setDirection(DcMotor.Direction.REVERSE);
         extender.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        extender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        extender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
     public void close(){
@@ -28,11 +31,29 @@ public class claw {
         rightTalon.setPosition(0);
     }
 
-    public void liftTo(int targetPos) throws InterruptedException {
-        extender.setTargetPosition(-1 * targetPos);
-        extender.setPower(1);
+    public void liftTo(int targetPos, double holdingForce){
+
+        extender.setTargetPosition(targetPos);
+        extender.setPower(.5);
         extender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        while(extender.isBusy()){}
-        extender.setPower(0);
+
+
+
+      /* int currentPos = extender.getCurrentPosition();
+      if(currentPos < targetPos){
+            while(currentPos < targetPos){
+                extender.setPower(-1);
+                currentPos = extender.getCurrentPosition();
+            }
+        }
+        else if(currentPos > targetPos){
+            while(currentPos > targetPos){
+                extender.setPower(1);
+                currentPos = extender.getCurrentPosition();
+            }
+        }
+        extender.setPower(-1 * holdingForce);*/
     }
+
+    public int getLiftPos(){ return extender.getCurrentPosition();}
 }

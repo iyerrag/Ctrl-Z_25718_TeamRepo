@@ -106,6 +106,7 @@ public class BasicOpMode_Linear extends LinearOpMode {
             // Choose to drive using either Tank Mode, or POV Mode
             // Comment out the method that's not used.  The default below is POV.
             if(gamepad1.a){
+                gripper.close();
                 /*robot.waypointSettings(1, 1,  .0135,0.000, 0.0, 0.25, 0.1, 0.1, 0.33, .1, .1);
                 robot.toWaypoint(-120, 0, 45);
                 robot.toWaypoint(-60, 120, 0);
@@ -116,7 +117,13 @@ public class BasicOpMode_Linear extends LinearOpMode {
                 robot.toWaypoint(0, 0, 0);*/
 
 
-                robot.waypointSettings(1.5, 1.5,.027,0.0027, .0027, .00375, .00375, .00375, 15, .1, .1, .1);
+                //robot.waypointSettings(1.5, 1.5,.027,0.0027, .0027, .0075, .00375, .00375, 15, .1, .1, .1);
+                robot.waypointSettings(1, 1.5,.027,0.0054, .0108, 0, 0, 0, 12, .1, .1, 14);
+                robot.toWaypoint(120, 120,0, 3);
+                robot.toWaypoint(0,120,90,3);
+                robot.toWaypoint(0,0,0,3);
+                //robot.toWaypoint(0, 120, 0, 10);
+                //robot.toWaypoint(0, 0,0,10);
                 /*robot.deflectTo(-60,60,0, 10,10, -60,110, 0, 2.5);
                 robot.toWaypoint(-60,0,0,1.5);
                 robot.toWaypoint(-140, 0, -90, 2.5);
@@ -132,11 +139,11 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
 
 
-                robot.toWaypoint(0, 60, 0, 1);
-                robot.deflectTo(-60, 100, 0, 20, 10, 0, 180, 90, 3);
-                robot.deflectTo(-60, 240, 90, 20, 10, -120, 180, 90, 3);
-                robot.deflectTo(-60, 120, 90, 20, 10, -120, 60, 90, 3);
-                robot.deflectTo(-60, 0, 90, 20, 10, 0, 0, 0, 3);
+                //robot.toWaypoint(0, 60, 0, 1);
+               // robot.deflectTo(-60, 100, 0, 20, 10, 0, 180, 90, 3);
+                //robot.deflectTo(-60, 240, 90, 20, 10, -120, 180, 90, 3);
+               // robot.deflectTo(-60, 120, 90, 20, 10, -120, 60, 90, 3);
+                //robot.deflectTo(-60, 0, 90, 20, 10, 0, 0, 0, 3);
 
 
 
@@ -192,11 +199,17 @@ public class BasicOpMode_Linear extends LinearOpMode {
             }
             else if(gamepad1.x){
                 gripper.close();
+                gripper.liftTo(0,0);
+                telemetry.addData("LiftPow: ", gripper.getLiftPos());
             }
             else if(gamepad1.y){
-                gripper.liftTo(5);
+                gripper.close();
+                gripper.liftTo(1000, 0);
+                telemetry.addData("LiftPos: ", gripper.getLiftPos());
             }
             else{
+                gripper.close();
+
                 // POV Mode uses left stick to go forward, and right stick to turn.
                 // - This uses basic math to combine motions and is easier to drive straight.
                 double powX = gamepad1.right_stick_x;
