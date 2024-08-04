@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
 import static java.lang.Thread.sleep;
 
 import java.lang.*;
@@ -35,12 +36,15 @@ public class chassis{
     private double waypointToleranceDist, waypointToleranceAng, waypointKp, waypointKi, waypointKd, waypointKcx, waypointKcy, waypointKctheta, waypointThetaWeight, waypointAccelLimXY, waypointAccelLimTheta, waypointClamping;
     static final double maxA = 0.3;
 
-    public chassis(DcMotor FL, DcMotor FR, DcMotor BL, DcMotor BR, BHI260IMU IMU, String thetaMode) {
+    static private VoltageSensor sensor;
+    static final double nominalVoltage = 12.15;
+
+    public chassis(DcMotor FL, DcMotor FR, DcMotor BL, DcMotor BR, BHI260IMU IMU, String thetaMode, double startingX, double startingY, double startingTheta, VoltageSensor voltmeter) {
         // Define Timer Objects:
         timer = new ElapsedTime();
         imu = new robotIMU(IMU);
         angleMode = thetaMode;
-        localizer = new NonEulerianOdometry(0.0, 0.0, 0.0, BL, BR, FL, imu, angleMode);
+        localizer = new NonEulerianOdometry(startingX, startingY, startingTheta, BL, BR, FL, imu, angleMode);
 
         // Define Motor Objects for Chassis:
         fL = FL;
@@ -69,6 +73,8 @@ public class chassis{
 
 
        // extender.setDirection(DcMotor.Direction.FORWARD);
+
+        sensor = voltmeter;
     }
 
     private boolean eqWT(double val1, double val2, double e){
@@ -164,6 +170,11 @@ public class chassis{
         waypointClamping = clamping;
     }
 
+    private double getBatteryVoltage(){
+        return sensor.getVoltage();
+    }
+
+
     public double[] toWaypoint(double waypointTargetX, double waypointTargetY, double waypointTargetTheta, double timeout){
         waypointTargetTheta *= Math.PI / 180.0;
         double Px = 0;
@@ -182,9 +193,9 @@ public class chassis{
         double globalCorrectionX = 0;
         double globalCorrectionY = 0;
         double globalCorrectionTheta = 0;
-        double previousGlobalCorrectionX;
-        double previousGlobalCorrectionY;
-        double previousGlobalCorrectionTheta;
+        double previousLocalCorrectionX = 0;
+        double previousLocalCorrectionY = 0;
+        double previousGlobalCorrectionTheta = 0;
         double previousErrX;
         double previousErrY;
         double previousErrTheta;
@@ -194,10 +205,10 @@ public class chassis{
         double errX = 0;
         double errY = 0;
         double errTheta = 0;
-        double correctionVectorMagnitude = 0.0;
-        double correctionVectorAngle = 0.0;
         double localCorrectionX = 0.0;
         double localCorrectionY = 0.0;
+
+        double Imax = 0;
 
 
         // Read current odometry position
@@ -266,25 +277,25 @@ public class chassis{
             Iy += dt * (errY + previousErrY) / 2.0;
             Itheta += dt * (errTheta + previousErrTheta) / 2.0;
 
-            if(Ix > Math.abs(waypointClamping)){
-                Ix = Math.abs(waypointClamping);
+            if(Ix * waypointKi > Math.abs(waypointClamping)){
+                Ix = Math.abs(waypointClamping) / waypointKi;
             }
-            else if(Ix < -1 * Math.abs(waypointClamping)){
-                Ix = -1 * Math.abs(waypointClamping);
-            }
-
-            if(Iy > Math.abs(waypointClamping)){
-                Iy = Math.abs(waypointClamping);
-            }
-            else if(Iy < - Math.abs(waypointClamping)){
-                Iy = -1 * Math.abs(waypointClamping);
+            else if(Ix * waypointKi < -1 * Math.abs(waypointClamping)){
+                Ix = -1 * Math.abs(waypointClamping) / waypointKi;
             }
 
-            if(Itheta > Math.abs(waypointClamping * waypointThetaWeight)){
-                Itheta = Math.abs(waypointClamping * waypointThetaWeight);
+            if(Iy * waypointKi > Math.abs(waypointClamping)){
+                Iy = Math.abs(waypointClamping) / waypointKi;
             }
-            else if(Itheta < - Math.abs(waypointClamping * waypointThetaWeight)){
-                Itheta = -1 * Math.abs(waypointClamping * waypointThetaWeight);
+            else if(Iy * waypointKi < - Math.abs(waypointClamping)){
+                Iy = -1 * Math.abs(waypointClamping) / waypointKi;
+            }
+
+            if(Itheta * waypointKi * waypointThetaWeight > Math.abs(waypointClamping)){
+                Itheta = Math.abs(waypointClamping) / (waypointKi * waypointThetaWeight);
+            }
+            else if(Itheta * waypointKi * waypointThetaWeight < - Math.abs(waypointClamping)){
+                Itheta = -1 * Math.abs(waypointClamping) / (waypointKi * waypointThetaWeight);
             }
 
             Dx = (errX - previousErrX) / dt;
@@ -292,9 +303,6 @@ public class chassis{
             Dtheta = (errTheta - previousErrTheta) / dt;
 
             // Calculate correction (multiply components by -1):
-            previousGlobalCorrectionX = globalCorrectionX;
-            previousGlobalCorrectionY = globalCorrectionY;
-            previousGlobalCorrectionTheta = globalCorrectionTheta;
 
             globalCorrectionX = (waypointKp * Px + waypointKi * Ix + waypointKd * Dx + Kcx);
             globalCorrectionY = (waypointKp * Py + waypointKi * Iy + waypointKd * Dy + Kcy);
@@ -303,57 +311,78 @@ public class chassis{
             localCorrectionY = globalCorrectionY * Math.cos(currentTheta) - globalCorrectionX * Math.sin(currentTheta);
             localCorrectionX = globalCorrectionY * Math.sin(currentTheta) + globalCorrectionX * Math.cos(currentTheta);
 
-            localCorrectionX *= 1.25;
-            localCorrectionY *= 0.9;
+            localCorrectionX *= 1.3;
+            localCorrectionY *= 0.75;
 
-            //localCorrectionY = globalCorrectionX * Math.cos(-1.0 * currentTheta) - globalCorrectionY * Math.sin(-1.0 * currentTheta);
-            //localCorrectionX = globalCorrectionX * Math.sin(-1.0 * currentTheta) + globalCorrectionY * Math.cos(currentTheta);
-
-            //localCorrectionX = 0.6;
-            //localCorrectionY = 0.6;
-
-            /*// Check if correction is within accelLim of previous correction to avoid slip
-            if(!eqWT(correctionX, previousCorrectionX, accelLimXY)){
-                if(correctionX > previousCorrectionX){
-                    correctionX = previousCorrectionX + accelLimXY;
+            // Rate Limiter: Check if correction is within accelLim of previous correction to avoid slip
+            if(!eqWT(localCorrectionX, previousLocalCorrectionX, waypointAccelLimXY)){
+                if(localCorrectionX > previousLocalCorrectionX){
+                    localCorrectionX = previousLocalCorrectionX + waypointAccelLimXY;
                 }
                 else{
-                    correctionX = previousCorrectionX - accelLimXY;
+                    localCorrectionX = previousLocalCorrectionX - waypointAccelLimXY;
                 }
             }
-            if(!eqWT(correctionY, previousCorrectionY, accelLimXY)){
-                if(correctionY > previousCorrectionY){
-                    correctionY = previousCorrectionY + accelLimXY;
+            if(!eqWT(localCorrectionY, previousLocalCorrectionY, waypointAccelLimXY)){
+                if(localCorrectionY > previousLocalCorrectionY){
+                    localCorrectionY = previousLocalCorrectionY + waypointAccelLimXY;
                 }
                 else{
-                    correctionY = previousCorrectionY - accelLimXY;
+                    localCorrectionY = previousLocalCorrectionY - waypointAccelLimXY;
                 }
             }
-            if(!eqWT(correctionTheta, previousCorrectionTheta, accelLimTheta)){
-                if(correctionTheta > previousCorrectionTheta){
-                    correctionTheta = previousCorrectionTheta + accelLimTheta;
+            if(!eqWT(globalCorrectionTheta, previousGlobalCorrectionTheta, waypointAccelLimTheta)){
+                if(globalCorrectionTheta > previousGlobalCorrectionTheta){
+                    globalCorrectionTheta = previousGlobalCorrectionTheta + waypointAccelLimTheta;
                 }
                 else{
-                    correctionTheta = previousCorrectionTheta - accelLimTheta;
+                    globalCorrectionTheta = previousGlobalCorrectionTheta - waypointAccelLimTheta;
                 }
             }
+
+            if(Iy * waypointKi > Imax){
+                Imax = Iy * waypointKi;
+            }
+
+            // Voltage Regulator:
+            double voltage = getBatteryVoltage();
+            double voltageScale = voltage / nominalVoltage;
 
             // Actuate Correction
-            double a = (correctionX  + correctionY)*(Math.pow(2, -0.5));
-            double b = (-correctionX + correctionY)*(Math.pow(2, -0.5));
-            fL.setPower(a * leftBias - correctionTheta * waypointThetaWeight);
-            fR.setPower(b * rightBias + correctionTheta * waypointThetaWeight);
-            bL.setPower(b * leftBias - correctionTheta * waypointThetaWeight);
-            bR.setPower(a * rightBias + correctionTheta * waypointThetaWeight);
-            */
-            // Actuate Correction
-            double denominator = Math.max(Math.abs(localCorrectionX) + Math.abs(localCorrectionY) + Math.abs(globalCorrectionTheta * waypointThetaWeight), 1.0);
+            double denominator = voltageScale * Math.max(Math.abs(localCorrectionX) + Math.abs(localCorrectionY) + Math.abs(globalCorrectionTheta * waypointThetaWeight), 1.0);
             double a = (localCorrectionX  + localCorrectionY);
             double b = (-localCorrectionX + localCorrectionY);
-            fL.setPower((a * leftBias - globalCorrectionTheta * waypointThetaWeight) / denominator);
-            fR.setPower((b * rightBias + globalCorrectionTheta * waypointThetaWeight) / denominator);
-            bL.setPower((b * leftBias - globalCorrectionTheta * waypointThetaWeight) / denominator);
-            bR.setPower((a * rightBias + globalCorrectionTheta * waypointThetaWeight) / denominator);
+            // Randomize Motor Acutation
+            double randomNum = (int)(Math.random() * 4) + 1;
+            if(randomNum == 1){
+                fR.setPower((b * rightBias + globalCorrectionTheta * waypointThetaWeight) / denominator);
+                fL.setPower((a * leftBias - globalCorrectionTheta * waypointThetaWeight) / denominator);
+                bR.setPower((a * rightBias + globalCorrectionTheta * waypointThetaWeight) / denominator);
+                bL.setPower((b * leftBias - globalCorrectionTheta * waypointThetaWeight) / denominator);
+            }
+            else if(randomNum == 2){
+                fL.setPower((a * leftBias - globalCorrectionTheta * waypointThetaWeight) / denominator);
+                bR.setPower((a * rightBias + globalCorrectionTheta * waypointThetaWeight) / denominator);
+                bL.setPower((b * leftBias - globalCorrectionTheta * waypointThetaWeight) / denominator);
+                fR.setPower((b * rightBias + globalCorrectionTheta * waypointThetaWeight) / denominator);
+            }
+            else if(randomNum == 3){
+                bR.setPower((a * rightBias + globalCorrectionTheta * waypointThetaWeight) / denominator);
+                bL.setPower((b * leftBias - globalCorrectionTheta * waypointThetaWeight) / denominator);
+                fR.setPower((b * rightBias + globalCorrectionTheta * waypointThetaWeight) / denominator);
+                fL.setPower((a * leftBias - globalCorrectionTheta * waypointThetaWeight) / denominator);
+            }
+            else{
+                bL.setPower((b * leftBias - globalCorrectionTheta * waypointThetaWeight) / denominator);
+                fR.setPower((b * rightBias + globalCorrectionTheta * waypointThetaWeight) / denominator);
+                fL.setPower((a * leftBias - globalCorrectionTheta * waypointThetaWeight) / denominator);
+                bR.setPower((a * rightBias + globalCorrectionTheta * waypointThetaWeight) / denominator);
+            }
+
+
+            previousLocalCorrectionX = localCorrectionX;
+            previousLocalCorrectionY = localCorrectionY;
+            previousGlobalCorrectionTheta = globalCorrectionTheta;
 
             //return new double[]{localCorrectionX, localCorrectionY, globalCorrectionX, globalCorrectionY, a, b};
        }
@@ -361,7 +390,7 @@ public class chassis{
         fR.setPower(0);
         bL.setPower(0);
         bR.setPower(0);
-        return new double[]{0.0, 0.0, 0.0, 0.0};
+        return new double[]{Imax, getBatteryVoltage(), 0.0, 0.0};
     }
 
     public void deflectTo(double deflectionXtarget, double deflectionYtarget, double deflectionThetatarget, double XYTol, double AngTol, double finalXtarget, double finalYtarget, double finalThetatarget, double timeout){

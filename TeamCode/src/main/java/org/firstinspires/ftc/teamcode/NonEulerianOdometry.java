@@ -9,7 +9,7 @@ public class NonEulerianOdometry {
     // Constant "c" is the width between parallel odometry wheels
     static final double c = 30;
     // Constant "r" is the radius of the odometry wheels in centimeters
-    static final double r = 2.4;
+    static final double r = 2.375;
     // Constant "ticksPerRev" is the number of ticks per odometry wheel revolution
     static final double ticksPerRev = 2000.0;
     // Constant "distancePerTick" is the distance moved per odometry wheel tick [autocalculated]

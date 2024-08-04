@@ -36,6 +36,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -77,18 +78,20 @@ public class BasicOpMode_Linear extends LinearOpMode {
         bL = hardwareMap.get(DcMotor.class, "BackLeft");
         bR = hardwareMap.get(DcMotor.class, "BackRight");
         BHI260IMU IMU = hardwareMap.get(BHI260IMU.class, "imu");
+        VoltageSensor voltmeter = hardwareMap.voltageSensor.iterator().next();
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
 
-        chassis robot = new chassis(fL, fR, bL, bR, IMU, "IMU");
+        chassis robot = new chassis(fL, fR, bL, bR, IMU, "IMU", 0, 0, 0, voltmeter);
         claw gripper = new claw(hardwareMap.get(Servo.class, "LeftTalon"), hardwareMap.get(Servo.class, "RightTalon"), hardwareMap.get(DcMotor.class, "Extender"));
 
         double[] position = new double[3];
         double[] differentials = new double[3];
         double primes;
         double gyroAngle = 0.0;
+        double[] storage = new double[] {0, 0, 0, 0};
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -106,8 +109,14 @@ public class BasicOpMode_Linear extends LinearOpMode {
             // Choose to drive using either Tank Mode, or POV Mode
             // Comment out the method that's not used.  The default below is POV.
             if(gamepad1.a){
-                /*robot.waypointSettings(1, 1,  .0135,0.000, 0.0, 0.25, 0.1, 0.1, 0.33, .1, .1);
-                robot.toWaypoint(-120, 0, 45);
+
+
+                robot.waypointSettings(0.5, 2,  .005,0.0007125,0,  0.0, 0.00, 0, 37.5, .025, .000375, 0.046);
+                storage = robot.toWaypoint(-60,120,0, 10);
+                storage = robot.toWaypoint(0,240,0, 10);
+                storage = robot.toWaypoint(60,120,0, 10);
+                storage = robot.toWaypoint(0,0,0, 10);
+                /*robot.toWaypoint(-120, 0, 45);
                 robot.toWaypoint(-60, 120, 0);
                 robot.toWaypoint(-120, 240, 15);
                 robot.toWaypoint(0, 240, -15);
@@ -117,81 +126,56 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
 
                 //robot.waypointSettings(1.5, 1.5,.027,0.0027, .0027, .0075, .00375, .00375, 15, .1, .1, .1);
-                robot.waypointSettings(1, 1.5,.027,0.0054, .0108, 0, 0, 0, 12, .1, .1, 14);
-                robot.toWaypoint(120, 120,0, 3);
-                robot.toWaypoint(0,120,90,3);
-                robot.toWaypoint(0,0,0,3);
-                //robot.toWaypoint(0, 120, 0, 10);
-                //robot.toWaypoint(0, 0,0,10);
-                /*robot.deflectTo(-60,60,0, 10,10, -60,110, 0, 2.5);
-                robot.toWaypoint(-60,0,0,1.5);
-                robot.toWaypoint(-140, 0, -90, 2.5);
-                robot.deflectTo(-140, 120, -90, 5,5,-120, 120, -90, 3.5);
-                robot.deflectTo(-140, 120, -90, 5, 5, -140, 0, -90, 3.5);
-                robot.toWaypoint(0,0,0, 3.5);
-                robot.deflectTo(0,240,0, 10,10, -110, 240, 180, 5);
-                robot.toWaypoint(-110, 180, 180, 1.5);
-                robot.deflectTo(-110, 240, 180, 20, 10, 0, 240, 0, 3);
-                robot.toWaypoint(0,0,0, 2.5);
-                robot.deflectTo(0, 170, 90, 5,5,-60, 170,90, 2.5);
-                robot.deflectTo(0, 170, 90, 5,5,0,0,0, 2.5);*/
+                //robot.waypointSettings(1, 1.5,.027,0.0054, .0108, 0, 0, 0, 4, .1, .1, 14);
+
+                /*robot.toWaypoint(120, 120,0, 3);
+                robot.toWaypoint(0,120,270,3);
+                robot.toWaypoint(0,0,0,3);*/
+                /*double xOffset = 22.5;
+                double yOffset = 13.5;
+                robot.toWaypoint(-57.5, 153.5,0, 5);
+                Thread.sleep(500);
+                gripper.close();
+                Thread.sleep(500);
+                gripper.liftTo(1000, 0);
+                robot.toWaypoint(-195, 140, 90, 5);
+                gripper.liftTo(0,0);
+                Thread.sleep(1000);
+                gripper.open();
+                /*robot.toWaypoint(-57.5, 210, 0,5);
+                robot.toWaypoint(-57.5, 272, 0,5);
+                robot.deflectTo(-37.5,210,0,20,15,-57.5,272,0,3);
+                Thread.sleep(500);
+                gripper.close();
+                Thread.sleep(500);
+                gripper.liftTo(1000,0);
+                robot.toWaypoint(-195, 140, 90, 5);
+                gripper.liftTo(158,0);
+                Thread.sleep(1000);
+                gripper.open();
+                gripper.close();
+                gripper.liftTo(0,0);
+                gripper.open();
+                robot.toWaypoint(-117.5,232,90,5);
+                robot.toWaypoint(-165,232,90,5);
+                robot.deflectTo(-117.5, 212, 90, 20, 15, -165,232,90, 3);
+                Thread.sleep(500);
+                gripper.liftTo(0,0);
+                gripper.close();
+                Thread.sleep(500);;
+                gripper.liftTo(1000,0);
+                robot.toWaypoint(-195, 140, 90, 5);
+                gripper.liftTo(216,0);
+                Thread.sleep(1000);
+                gripper.open();*/
 
 
 
-                //robot.toWaypoint(0, 60, 0, 1);
-               // robot.deflectTo(-60, 100, 0, 20, 10, 0, 180, 90, 3);
-                //robot.deflectTo(-60, 240, 90, 20, 10, -120, 180, 90, 3);
-               // robot.deflectTo(-60, 120, 90, 20, 10, -120, 60, 90, 3);
-                //robot.deflectTo(-60, 0, 90, 20, 10, 0, 0, 0, 3);
 
 
 
-
-
-                /*robot.toWaypoint(0, 240, 0);
-                robot.toWaypoint(-120, 240, 0);
-                robot.toWaypoint(-120, 0, 0);
-                robot.toWaypoint(0,0,0);
-                robot.toWaypoint(0, 240, 0);
-                robot.toWaypoint(0, 240, 90);
-                robot.toWaypoint(-120, 240, 90);
-                robot.toWaypoint(-120, 240, 180);
-                robot.toWaypoint(-120, 0, 180);
-                robot.toWaypoint(-120, 0, 270);
-                robot.toWaypoint(0, 0,270);
-                robot.toWaypoint(0,0,0);
-                robot.toWaypoint(0, 240, 90);
-                robot.toWaypoint(-120, 240, 180);
-                robot.toWaypoint(-120, 0, 270);
-                robot.toWaypoint(0, 0, 0);
-                //robot.waypointSettings(1, 1,  0.027,0.0027, .0027, .00375, .00375, .00375, 15, .1, .1, .1);
-                /*robot.toWaypoint(0, 240, 45);
-                robot.toWaypoint(0, 0, 0);
-                robot.toWaypoint(-120, 0, 0);
-                robot.waypointSettings(1, 1,  0.027,0, 0.027 * 0.05, 0, 0, 0.1, 1, .1, .1);
-                robot.toWaypoint(-120, 0, 180);
-                robot.toWaypoint(-120, 0, 0);
-                robot.toWaypoint(0,0,0);
-                robot.gyroTurn(-1, 1, 90);
-                robot.gyroTurn(1, -1, 0);*/
-
-
-
-                /*robot.toWaypoint(-60, 240, 45, 2);
-                robot.toWaypoint(-60, 240, 0, 2);
-                robot.toWaypoint(0,0,0,2);
-                robot.toWaypoint(-60, 120, 0,2);
-                robot.toWaypoint(-120, 240, 15,2);
-                robot.toWaypoint(0, 240, -15,2);
-                robot.toWaypoint(-60, 120, -45,2);
-                robot.toWaypoint(0, 0, 0,2);
-                robot.toWaypoint(0, 240, 0,2);
-                robot.toWaypoint(-60, 0, -30,2);
-                robot.toWaypoint(-120, 240, 30,2);
-                robot.toWaypoint(-120, 0, -30,2);
-                robot.toWaypoint(-60, 240, 30,2);
-                robot.waypointSettings(1.5, 1.5,.027,0.0027, .0027, .00375, .00375, .00375, 15, .1, .1, .1);
-                robot.toWaypoint(0, 0, 0, 3);*/
+                //robot.toWaypoint(0,120,90,3);
+                //robot.toWaypoint(0,0,0,3);
             }
             else if(gamepad1.b){
                 gripper.open();
@@ -227,16 +211,6 @@ public class BasicOpMode_Linear extends LinearOpMode {
                 robot.updateOdometry();
                 position = robot.getPosition();
                 gyroAngle = Math.round(robot.getAngle() * 100.0) / 100.0;
-                        /*double A[][] = { { 1, 1, 1 },
-                                { 2, 2, 2 },
-                                { 3, 3, 3 },
-                                { 4, 4, 4 } };
-
-                        double B[][] = { { 1, 1, 1, 1 },
-                                { 2, 2, 2, 2 },
-                                { 3, 3, 3, 3 } };
-
-                        double[][] c = Odometry.multiplyMatrix(A, B);*/
 
                 // telemetry.addData("dx: ", "" + temp[0]);
 
@@ -253,6 +227,8 @@ public class BasicOpMode_Linear extends LinearOpMode {
             telemetry.addData("Y:", "" + Math.round(position[1] * 100.0) / 100.0);
             telemetry.addData("Theta:", "" + (Math.round(position[2] * 100.0) / 100.0) * 180.0 / Math.PI);
             telemetry.addData("Gyro Angle:", "" + gyroAngle * 180.0 / Math.PI);
+            telemetry.addData("Optimal Clamp: ", "" + storage[0]);
+            telemetry.addData("Battery Voltage Reading: ", "" + storage[1]);
             /*telemetry.addData("globalCorrectionX: ", "" + ab[0]);
             telemetry.addData("globalCorrectionY: ", "" + ab[1]);
             telemetry.addData("correctionX: ", "" + ab[2]);
