@@ -40,6 +40,8 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+
 import java.util.ArrayList;
 
 
@@ -81,12 +83,13 @@ public class BasicOpMode_Linear extends LinearOpMode {
         bR = hardwareMap.get(DcMotor.class, "BackRight");
         BHI260IMU IMU = hardwareMap.get(BHI260IMU.class, "imu");
         VoltageSensor voltmeter = hardwareMap.voltageSensor.iterator().next();
+        WebcamName myCamera = hardwareMap.get(WebcamName.class, "Webcam 1");
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
 
-        chassis robot = new chassis(fL, fR, bL, bR, IMU, "IMU", 0, 0, 0, voltmeter);
+        chassis robot = new chassis(fL, fR, bL, bR, IMU, "IMU", 0, 0, 0, voltmeter, myCamera, new double[]{14.605, 32.385, 0});
         claw gripper = new claw(hardwareMap.get(Servo.class, "LeftTalon"), hardwareMap.get(Servo.class, "RightTalon"), hardwareMap.get(DcMotor.class, "Extender"));
 
         double[] position = new double[3];
@@ -112,15 +115,17 @@ public class BasicOpMode_Linear extends LinearOpMode {
             // Comment out the method that's not used.  The default below is POV.
             if(gamepad1.a){
 
-                robot.waypointSettings(1.5, 1.5, 1,
+
+               robot.waypointSettings(1.5, 1.5, 1,
                                     .0145, .008125, 0, 0,
                                     .012, .002025, 0, 0,
                                   .125, .1425, 0, 0,
                                .024, .03, 10,
                                .075, .03, .05);
-                /*robot.waypointSettings(1.5, 1.5, 1,
-                        .145, .007125, 0, 0,
-                        .10, .002025, 0, 0,
+
+               /*robot.waypointSettings(1.5, 1.5, 1,
+                        .1, .00, 0, 0,
+                        .1, .00, 0, 0,
                         1.25, .1425, 0, 0,
                         .024, .03, 10,
                         .065, .03, .05);*/
@@ -148,12 +153,37 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
                  */
                 ArrayList<double[]> myTarget = new ArrayList<double[]>();
+                /*myTarget.add(new double[]{0, 0, 0});
+                myTarget.add(new double[]{75, 30, 0});
+                myTarget.add(new double[]{90, 60, 0});
+                myTarget.add(new double[]{-15, 90, 0});
+                myTarget.add(new double[]{-90, 120, 0});
+                myTarget.add(new double[]{15, 150, 0});
+                myTarget.add(new double[]{90, 180, 0});
+                myTarget.add(new double[]{0, 240, 0});*/
+                /*myTarget.add(new double[]{0, 0, 0});
+                myTarget.add(new double[]{240, 30, 0});
+                myTarget.add(new double[]{-240, 60, 0});
+                myTarget.add(new double[]{120, 120, 0});*/
                 myTarget.add(new double[]{0, 0, 0});
-                myTarget.add(new double[]{-120, 60, 45});
-                myTarget.add(new double[]{0, 120, 45});
-                myTarget.add(new double[]{-120, 180, 90});
-                myTarget.add(new double[]{0, 240, 90});
-                storage = robot.toWaypointBezier(myTarget, 3, 5);
+                myTarget.add(new double[]{45, 30, 0});
+                myTarget.add(new double[]{75, 30, 0});
+                myTarget.add(new double[]{60, 60, 0});
+                myTarget.add(new double[]{90, 60, 0});
+                myTarget.add(new double[]{15, 90, 0});
+                myTarget.add(new double[]{-15, 90, 0});
+                myTarget.add(new double[]{-60, 120, 0});
+                myTarget.add(new double[]{-90, 120, 0});
+                myTarget.add(new double[]{-15, 120, 0});
+                myTarget.add(new double[]{15, 120, 0});
+                myTarget.add(new double[]{60, 180, 0});
+                myTarget.add(new double[]{0, 240, 0});
+                myTarget.add(new double[]{0, 0, 0});
+
+
+
+
+                storage = robot.toWaypointBezier(myTarget, 10, 15);
                 /*robot.toWaypoint(-120, 0, 45);
                 robot.toWaypoint(-60, 120, 0);
                 robot.toWaypoint(-120, 240, 15);
@@ -228,6 +258,9 @@ public class BasicOpMode_Linear extends LinearOpMode {
             }
             else if(gamepad1.right_bumper){
                 gripper.close();
+            }
+            else if(gamepad1.left_bumper){
+                robot.visualLocalization(new double[]{240, 60, -90}, 584, 100);
             }
             else{
                 // POV Mode uses left stick to go forward, and right stick to turn.

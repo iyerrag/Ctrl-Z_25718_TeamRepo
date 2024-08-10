@@ -51,7 +51,7 @@ public class NonEulerianOdometry {
     public NonEulerianOdometry(double startingX, double startingY, double startingTheta, DcMotor left, DcMotor right, DcMotor front, robotIMU IMU, String thetaMode){
         x = startingX;
         y = startingY;
-        theta = startingTheta;
+        theta = startingTheta * Math.PI / 180;
         leftEncoder = left;
         rightEncoder = right;
         frontEncoder = front;

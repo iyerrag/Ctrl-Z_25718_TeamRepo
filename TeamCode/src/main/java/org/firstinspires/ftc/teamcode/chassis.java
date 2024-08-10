@@ -1,10 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
 import static java.lang.Thread.sleep;
+
+import android.util.Size;
 
 import java.lang.*;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.acmerobotics.roadrunner.util.NanoClock;
 import com.qualcomm.hardware.bosch.BHI260IMU;
@@ -14,10 +16,16 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import com.qualcomm.robotcore.hardware.*;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 public class chassis{
 
@@ -40,7 +48,20 @@ public class chassis{
     static private VoltageSensor sensor;
     static final double nominalVoltage = 12.15;
 
-    public chassis(DcMotor FL, DcMotor FR, DcMotor BL, DcMotor BR, BHI260IMU IMU, String thetaMode, double startingX, double startingY, double startingTheta, VoltageSensor voltmeter) {
+    static private WebcamName camera;
+    static private double[] cameraOffsetPose;
+
+    /**
+     * The variable to store our instance of the AprilTag processor.
+     */
+    private AprilTagProcessor aprilTag;
+
+    /**
+     * The variable to store our instance of the vision portal.
+     */
+    private VisionPortal visionPortal;
+
+    public chassis(DcMotor FL, DcMotor FR, DcMotor BL, DcMotor BR, BHI260IMU IMU, String thetaMode, double startingX, double startingY, double startingTheta, VoltageSensor voltmeter, WebcamName cameraName, double[] cameraNameOffset) {
         // Define Timer Objects:
         timer = new ElapsedTime();
         imu = new robotIMU(IMU);
@@ -76,7 +97,76 @@ public class chassis{
        // extender.setDirection(DcMotor.Direction.FORWARD);
 
         sensor = voltmeter;
+
+        camera = cameraName;
+        cameraOffsetPose = cameraNameOffset;
+        cameraOffsetPose[2] *= Math.PI / 180;
+
+        initAprilTag();
     }
+
+    private void initAprilTag() {
+
+        // Create the AprilTag processor.
+        aprilTag = new AprilTagProcessor.Builder()
+
+                // The following default settings are available to un-comment and edit as needed.
+                //.setDrawAxes(false)
+                //.setDrawCubeProjection(false)
+                //.setDrawTagOutline(true)
+                //.setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
+                //.setTagLibrary(AprilTagGameDatabase.getCenterStageTagLibrary())
+
+                .setOutputUnits(DistanceUnit.CM, AngleUnit.RADIANS)
+
+                // == CAMERA CALIBRATION ==
+                // If you do not manually specify calibration parameters, the SDK will attempt
+                // to load a predefined calibration for your camera.
+                .setLensIntrinsics(1196.94, 1196.94, 804.849, 411.195)
+                // ... these parameters are fx, fy, cx, cy.
+
+                .build();
+
+        // Adjust Image Decimation to trade-off detection-range for detection-rate.
+        // eg: Some typical detection data using a Logitech C920 WebCam
+        // Decimation = 1 ..  Detect 2" Tag from 10 feet away at 10 Frames per second
+        // Decimation = 2 ..  Detect 2" Tag from 6  feet away at 22 Frames per second
+        // Decimation = 3 ..  Detect 2" Tag from 4  feet away at 30 Frames Per Second (default)
+        // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second (default)
+        // Note: Decimation can be changed on-the-fly to adapt during a match.
+        aprilTag.setDecimation(3);
+
+        // Create the vision portal by using a builder.
+        VisionPortal.Builder builder = new VisionPortal.Builder();
+
+        // Set the camera
+        builder.setCamera(camera);
+
+
+        // Choose a camera resolution. Not all cameras support all resolutions.
+        builder.setCameraResolution(new Size(1600, 896));
+
+        // Enable the RC preview (LiveView).  Set "false" to omit camera monitoring.
+        //builder.enableLiveView(true);
+
+        // Set the stream format; MJPEG uses less bandwidth than default YUY2.
+        //builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
+
+        // Choose whether or not LiveView stops if no processors are enabled.
+        // If set "true", monitor shows solid orange screen if no processors enabled.
+        // If set "false", monitor shows camera view without annotations.
+        //builder.setAutoStopLiveView(false);
+
+        // Set and enable the processor.
+        builder.addProcessor(aprilTag);
+
+        // Build the Vision Portal, using the above settings.
+        visionPortal = builder.build();
+
+        // Disable or re-enable the aprilTag processor at any time.
+        //visionPortal.setProcessorEnabled(aprilTag, true);
+
+    }   // end method initAprilTag()
 
     private boolean eqWT(double val1, double val2, double e){
         return Math.abs(val1 - val2) <= e;
@@ -521,6 +611,7 @@ public class chassis{
         return cord;
     }
 
+    // NOTE: High Chance for Computational Failure With More Than 10 Bezier Points; Guarenteed Failure With 14 or More Bezier Points;
     public double[] toWaypointBezier(ArrayList<double[]> targetPoints,  double runtime, double timeout){
         for(int i = 0; i < targetPoints.size(); i++){
             double[] point = targetPoints.get(i);
@@ -570,6 +661,7 @@ public class chassis{
 
         double Imax = 0;
 
+        double t = 0;
 
 
         // Read current odometry position
@@ -580,7 +672,7 @@ public class chassis{
         double currentTheta = currentPos[2];
 
         // PID control to waypoint
-        while((!eqWT(currentX, targetPoints.get(targetPoints.size() - 1)[0], waypointToleranceDistX) || !eqWT(currentY, targetPoints.get(targetPoints.size() - 1)[1], waypointToleranceDistY) || !eqWT(currentTheta, targetPoints.get(targetPoints.size() - 1)[2], waypointToleranceAng)) && ((timer.seconds() - startTime) < timeout)){
+        while((!eqWT(currentX, targetPoints.get(targetPoints.size() - 1)[0], waypointToleranceDistX) || !eqWT(currentY, targetPoints.get(targetPoints.size() - 1)[1], waypointToleranceDistY) || !eqWT(currentTheta, targetPoints.get(targetPoints.size() - 1)[2], waypointToleranceAng) || (t != 1)) && ((timer.seconds() - startTime) < timeout)){
             // Read current odometry position
             localizer.updateOdometry();
             currentPos = localizer.getPosition();
@@ -597,7 +689,7 @@ public class chassis{
             previousErrTheta = errTheta;
 
             // Get Brezier Target
-            double t = (timer.seconds() - startTime) / runtime;
+            t = (timer.seconds() - startTime) / runtime;
             if(t > 1){
                 t = 1;
             }
@@ -612,6 +704,8 @@ public class chassis{
             Px = errX;
             Py = errY;
             Ptheta = errTheta;
+
+
 
             if(Px > 0){
                 Kcx = Math.abs(waypointKcx);
@@ -761,7 +855,6 @@ public class chassis{
                 bR.setPower((a * rightBias + globalCorrectionTheta) / denominator);
             }
 
-
             previousLocalCorrectionX = localCorrectionX;
             previousLocalCorrectionY = localCorrectionY;
             previousGlobalCorrectionTheta = globalCorrectionTheta;
@@ -801,5 +894,54 @@ public class chassis{
         fL.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.BRAKE));
         fR.setZeroPowerBehavior((DcMotor.ZeroPowerBehavior.BRAKE));
     }*/
+
+    public void visualLocalization(double[] aprilTagPosition, int aprilTagID, int filterSize){
+
+        aprilTagPosition[2] *= Math.PI / 180;
+
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+        double xDist = 0;
+        double yDist = 0;
+        double thetaDiff = 0;
+        for (AprilTagDetection detection : currentDetections) {
+            if (detection.metadata != null && detection.id == aprilTagID) {
+               double xSum = 0;
+               double ySum = 0;
+               double thetaSum = 0;
+               for(int i = 0; i < filterSize; i++){
+                   xSum += detection.ftcPose.x;
+                   ySum += detection.ftcPose.y;
+                   thetaSum += detection.ftcPose.yaw;
+               }
+               xDist = xSum / filterSize;
+               yDist = ySum / filterSize;
+               thetaDiff = thetaSum / filterSize;
+            }
+        }   // end for() loop
+
+        double thetaPos = aprilTagPosition[2] - thetaDiff + Math.PI;
+
+        double xPos = aprilTagPosition[0] + (Math.sqrt(Math.pow(xDist, 2) + Math.pow(yDist, 2)) * Math.cos(thetaPos - (Math.PI / 2)));
+        double yPos = aprilTagPosition[1] + (Math.sqrt(Math.pow(xDist, 2) + Math.pow(yDist, 2)) * Math.sin(thetaPos - (Math.PI / 2)));
+        thetaPos -= cameraOffsetPose[2];
+        double beta = 0;
+        if(cameraOffsetPose[0] > 0){
+            beta = Math.atan(cameraOffsetPose[1] / cameraOffsetPose[0]);
+        }
+        else if(cameraOffsetPose[0] < 0){
+            beta = Math.atan(cameraOffsetPose[1]) + Math.PI;
+        }
+        else if(cameraOffsetPose[0] == 0 && cameraOffsetPose[1] > 0){
+            beta = Math.PI / 2;
+        }
+        else{
+            beta = - Math.PI / 2;
+        }
+        xPos += (Math.sqrt(Math.pow(cameraOffsetPose[0], 2) + Math.pow(cameraOffsetPose[1], 2)) * Math.cos(thetaPos + beta - Math.PI));
+        yPos += (Math.sqrt(Math.pow(cameraOffsetPose[0], 2) + Math.pow(cameraOffsetPose[1], 2)) * Math.sin(thetaPos + beta - Math.PI));
+
+        localize(xPos, yPos, thetaPos * 180 / Math.PI);
+
+    }
 
 }
