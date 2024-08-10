@@ -69,7 +69,7 @@ import java.util.List;
             waitForStart();
             runtime.reset();
             //0.027 * 0.05
-            robot.waypointSettings(1, 1, 0.027, 0,0 , 0.1, 0.1, 0.1, .33, .1, .1, 1);
+            //robot.waypointSettings(1, 1, 0.027, 0,0 , 0.1, 0.1, 0.1, .33, .1, .1, 1);
             Thread.sleep(10000);
             // run until the end of the match (driver presses STOP)
             while (opModeIsActive()) {

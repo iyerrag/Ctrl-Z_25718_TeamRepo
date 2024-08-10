@@ -40,6 +40,8 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import java.util.ArrayList;
+
 
 /*
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -110,12 +112,48 @@ public class BasicOpMode_Linear extends LinearOpMode {
             // Comment out the method that's not used.  The default below is POV.
             if(gamepad1.a){
 
+                robot.waypointSettings(1.5, 1.5, 1,
+                                    .0145, .008125, 0, 0,
+                                    .012, .002025, 0, 0,
+                                  .125, .1425, 0, 0,
+                               .024, .03, 10,
+                               .075, .03, .05);
+                /*robot.waypointSettings(1.5, 1.5, 1,
+                        .145, .007125, 0, 0,
+                        .10, .002025, 0, 0,
+                        1.25, .1425, 0, 0,
+                        .024, .03, 10,
+                        .065, .03, .05);*/
 
-                robot.waypointSettings(0.5, 2,  .005,0.0007125,0,  0.0, 0.00, 0, 37.5, .025, .000375, 0.046);
+
+                //robot.waypointSettings(0, 2,  .005,0.0007125,0,  0.0, 0.00, 0, 37.5, .025, .000375, 0.046);
+                /*
+
                 storage = robot.toWaypoint(-60,120,0, 10);
                 storage = robot.toWaypoint(0,240,0, 10);
                 storage = robot.toWaypoint(60,120,0, 10);
-                storage = robot.toWaypoint(0,0,0, 10);
+                storage = robot.toWaypoint(0,0,0, 10);*/
+                /*storage = robot.toWaypoint(0, 180, 0, 3);
+                storage = robot.toWaypoint(-120, 180, 0, 3);
+                storage = robot.toWaypoint(-120, 0, 0, 3);
+                storage = robot.toWaypoint(0, 0, 0, 3);
+                storage = robot.toWaypoint(-120, 180, 0, 3);
+                storage = robot.toWaypoint(0, 180, 0, 3);
+                storage = robot.toWaypoint(-120, 0, 0, 3);
+                storage = robot.toWaypoint(0, 0, 0, 3);
+                storage = robot.toWaypoint(-120, 180, 45, 5);
+                storage = robot.toWaypoint(0, 180, 45, 5);
+                storage = robot.toWaypoint(-120, 0, 45, 5);
+                storage = robot.toWaypoint(0, 0, 0, 5);/*
+
+                 */
+                ArrayList<double[]> myTarget = new ArrayList<double[]>();
+                myTarget.add(new double[]{0, 0, 0});
+                myTarget.add(new double[]{-120, 60, 45});
+                myTarget.add(new double[]{0, 120, 45});
+                myTarget.add(new double[]{-120, 180, 90});
+                myTarget.add(new double[]{0, 240, 90});
+                storage = robot.toWaypointBezier(myTarget, 3, 5);
                 /*robot.toWaypoint(-120, 0, 45);
                 robot.toWaypoint(-60, 120, 0);
                 robot.toWaypoint(-120, 240, 15);
