@@ -168,7 +168,7 @@ public class chassis{
 
     }   // end method initAprilTag()
 
-    private boolean eqWT(double val1, double val2, double e){
+    public boolean eqWT(double val1, double val2, double e){
         return Math.abs(val1 - val2) <= e;
     }
 
