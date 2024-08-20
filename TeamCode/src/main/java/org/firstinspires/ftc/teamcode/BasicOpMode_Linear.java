@@ -67,6 +67,11 @@ public class BasicOpMode_Linear extends LinearOpMode {
     private static final double tolTheta = 1;
     private static final double deccelScale = 3.0;
 
+    static final double frontLeftBias = 0.97;
+    static final double frontRightBias = 0.95;
+    static final double backLeftBias = 1.0;
+    static final double backRightBias = 1.0;
+
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor fL;
@@ -296,10 +301,10 @@ public class BasicOpMode_Linear extends LinearOpMode {
                 // Send calculated power to wheels
                 double a = (powX + powY) * (Math.pow(2, -0.5));
                 double b = (-powX + powY) * (Math.pow(2, -0.5));
-                fL.setPower(a + addLeft);
-                fR.setPower(b + addRight);
-                bL.setPower(b + addLeft);
-                bR.setPower(a + addRight);
+                fL.setPower((a + addLeft) * frontLeftBias);
+                fR.setPower((b + addRight) * frontRightBias);
+                bL.setPower((b + addLeft) * backLeftBias);
+                bR.setPower((a + addRight) * backRightBias);
 
                 robot.updateOdometry();
                 position = robot.getPosition();
@@ -384,10 +389,10 @@ public class BasicOpMode_Linear extends LinearOpMode {
                 // Send calculated power to wheels
                 double a = (powX + powY) * (Math.pow(2, -0.5));
                 double b = (-powX + powY) * (Math.pow(2, -0.5));
-                fL.setPower(a + addLeft);
-                fR.setPower(b + addRight);
-                bL.setPower(b + addLeft);
-                bR.setPower(a + addRight);
+                fL.setPower((a + addLeft) * frontLeftBias);
+                fR.setPower((b + addRight) * frontRightBias);
+                bL.setPower((b + addLeft) * backLeftBias);
+                bR.setPower((a + addRight) * backRightBias);
 
                 robot.updateOdometry();
                 position = robot.getPosition();
@@ -400,7 +405,63 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
                 // telemetry.addData("dTheta: ", "" + temp[2]);
             }
+            /*&if else(gamepad2.left_stick_y != 0){
+                claw.close();
+                claw.liftTo(gamepad2.)
 
+            }*/
+            else if(gamepad1.right_trigger != 0){
+                //Local Y-Lock w/o Rate Limiters:
+                double powX = 0;
+                double powY;
+                double addLeft = 0;
+                double addRight = 0;
+
+                if(gamepad1.right_stick_y >= 0){
+                    powY = -1 * Math.pow(Math.abs(gamepad1.right_stick_y), 2);
+                }
+                else{
+                    powY = Math.pow(Math.abs(gamepad1.right_stick_y), 2);
+                }
+
+                // Send calculated power to wheels
+                double a = (powX + powY) * (Math.pow(2, -0.5));
+                double b = (-powX + powY) * (Math.pow(2, -0.5));
+                fL.setPower((a + addLeft) * frontLeftBias);
+                fR.setPower((b + addRight) * frontRightBias);
+                bL.setPower((b + addLeft) * backLeftBias);
+                bR.setPower((a + addRight) * backRightBias);
+
+                robot.updateOdometry();
+                position = robot.getPosition();
+                gyroAngle = Math.round(robot.getAngle() * 100.0) / 100.0;
+            }
+            else if(gamepad1.left_trigger != 0){
+                //Local X-Lock w/o Rate Limiters:
+                double powX;
+                double powY = 0;
+                double addLeft = 0;
+                double addRight = 0;
+
+                if(gamepad1.right_stick_x >= 0){
+                    powX = Math.pow(Math.abs(gamepad1.right_stick_x), 2);
+                }
+                else{
+                    powX = -1.0 * Math.pow(Math.abs(gamepad1.right_stick_x), 2);
+                }
+
+                // Send calculated power to wheels
+                double a = (powX + powY) * (Math.pow(2, -0.5));
+                double b = (-powX + powY) * (Math.pow(2, -0.5));
+                fL.setPower((a + addLeft) * frontLeftBias);
+                fR.setPower((b + addRight) * frontRightBias);
+                bL.setPower((b + addLeft) * backLeftBias);
+                bR.setPower((a + addRight) * backRightBias);
+
+                robot.updateOdometry();
+                position = robot.getPosition();
+                gyroAngle = Math.round(robot.getAngle() * 100.0) / 100.0;
+            }
             else{
                 //Default Control: Local Vectors + Rate Limiters
                 double powX;
@@ -465,10 +526,10 @@ public class BasicOpMode_Linear extends LinearOpMode {
                 // Send calculated power to wheels
                 double a = (powX + powY) * (Math.pow(2, -0.5));
                 double b = (-powX + powY) * (Math.pow(2, -0.5));
-                fL.setPower(a + addLeft);
-                fR.setPower(b + addRight);
-                bL.setPower(b + addLeft);
-                bR.setPower(a + addRight);
+                fL.setPower((a + addLeft) * frontLeftBias);
+                fR.setPower((b + addRight) * frontRightBias);
+                bL.setPower((b + addLeft) * backLeftBias);
+                bR.setPower((a + addRight) * backRightBias);
 
                 robot.updateOdometry();
                 position = robot.getPosition();
